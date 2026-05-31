@@ -153,7 +153,7 @@ function ProblemPage() {
           {/* 中间：题目标题 */}
           <div className="flex items-center gap-3">
             <span className="text-gray-500 font-mono text-sm">
-              #{problem.leetcodeNumber}
+              P{problem.leetcodeNumber}
             </span>
             <h2 className="text-lg font-bold text-gray-900">
               {problem.title}

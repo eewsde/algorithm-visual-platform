@@ -135,6 +135,11 @@ export const visualizerRegistry: Record<number, ComponentType> = {
   125: lazy(() => import("./Problem125/FindMedianSortedArraysVisualizer")),
   126: lazy(() => import("./Problem126/ProductExceptSelfVisualizer")),
   127: lazy(() => import("./Problem127/InvertTreeVisualizer")),
+  // 洛谷题目
+  200: lazy(() => import("./Problem200/DijkstraVisualizer")),
+  201: lazy(() => import("./Problem201/KruskalVisualizer")),
+  202: lazy(() => import("./Problem202/FloydVisualizer")),
+  203: lazy(() => import("./Problem203/Knapsack01Visualizer")),
 };
 
 /**

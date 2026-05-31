@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Code2, Github } from "lucide-react";
+import { Code2 } from "lucide-react";
 
 function Header() {
   const location = useLocation();
@@ -7,9 +7,6 @@ function Header() {
   const navItems = [
     { path: "/", label: "首页" },
     { path: "/problems", label: "题目总览" },
-    { path: "/ai", label: "AI 题解" },
-    { path: "/cuda", label: "CUDA" },
-    { path: "/concepts", label: "术语/概念" },
   ];
 
   return (
@@ -49,15 +46,6 @@ function Header() {
             </nav>
           </div>
 
-          <a
-            href="https://github.com/datawhalechina/algo-vis"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 text-gray-700 hover:text-primary-600 transition font-medium"
-          >
-            <Github size={20} />
-            <span>GitHub</span>
-          </a>
         </div>
 
         <nav className="mt-4 flex md:hidden gap-2 overflow-x-auto pb-1">

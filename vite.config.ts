@@ -7,7 +7,7 @@ export default defineConfig({
   // 如果部署到 GitHub Pages 且仓库名不是 username.github.io，需要设置 base
   // 例如：base: '/leetcode-view/'
   // 可以通过环境变量 VITE_BASE_PATH 设置，或在 GitHub Actions 中自动设置
-  base: process.env.VITE_BASE_PATH || "/",
+  base: process.env.VITE_BASE_PATH || "/algorithm-visual-platform/",
   plugins: [react()],
   resolve: {
     alias: {

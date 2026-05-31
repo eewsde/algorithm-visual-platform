@@ -59,7 +59,7 @@ export function ProblemGroupCard({
                 )}
                 
                 <span className="text-gray-500 font-mono text-sm flex-shrink-0">
-                  #{problem.leetcodeNumber}
+                  P{problem.leetcodeNumber}
                 </span>
                 
                 <Tooltip title={problem.title} placement="top">

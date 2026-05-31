@@ -9,14 +9,6 @@ import './App.css'
 const HomePage = lazy(() => import('./pages/HomePage'))
 const ProblemListPage = lazy(() => import('./pages/ProblemListPage'))
 const ProblemPage = lazy(() => import('./pages/ProblemPage'))
-const AiHomePage = lazy(() => import('./pages/AiHomePage'))
-const AiProblemPage = lazy(() => import('./pages/AiProblemPage'))
-const CudaHomePage = lazy(() => import('./pages/CudaHomePage'))
-const CudaProblemPage = lazy(() => import('./pages/CudaProblemPage'))
-const ConceptsHomePage = lazy(() => import('./pages/ConceptsHomePage'))
-const ConceptListPage = lazy(() => import('./pages/ConceptListPage'))
-const DRLHomePage = lazy(() => import('./pages/DRLHomePage'))
-const DRLProblemPage = lazy(() => import('./pages/DRLProblemPage'))
 
 /**
  * 页面加载占位组件
@@ -49,15 +41,6 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/problems" element={<ProblemListPage />} />
             <Route path="/problem/:id" element={<ProblemPage />} />
-            <Route path="/ai" element={<AiHomePage />} />
-            <Route path="/ai/:id" element={<AiProblemPage />} />
-            <Route path="/cuda" element={<CudaHomePage />} />
-            <Route path="/cuda/:id" element={<CudaProblemPage />} />
-            <Route path="/concepts" element={<ConceptsHomePage />} />
-            <Route path="/concepts/book/:slug" element={<ConceptListPage />} />
-            <Route path="/concepts/:id" element={<div>Concept Detail Page (待实现)</div>} />
-            <Route path="/drl" element={<DRLHomePage />} />
-            <Route path="/drl/:id" element={<DRLProblemPage />} />
           </Routes>
         </Suspense>
       </Layout>

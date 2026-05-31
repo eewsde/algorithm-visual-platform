@@ -106,10 +106,10 @@ function ProblemListPage() {
     <div className="w-full px-4 md:px-10 lg:px-24 xl:px-32 2xl:px-40">
       <div className="mb-8 pt-12 text-center">
         <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          LeetCode 热题 100 算法可视化
+          算法题目总览
         </h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          通过动画和图解深入理解算法原理，让抽象的代码变得直观易懂
+          洛谷官方训练营题目，通过动画和图解深入理解图论与动态规划算法
         </p>
       </div>
 

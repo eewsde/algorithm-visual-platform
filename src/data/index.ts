@@ -10,22 +10,14 @@ import { binarySearchProblems } from "./binarySearch";
 import { stackProblems } from "./stack";
 import { greedyProblems } from "./greedy";
 import { dpProblems } from "./dp";
+import { luoguProblems } from "./luogu";
 
 /**
  * 合并所有题目数据
+ * 当前仅展示洛谷训练营题目
  */
 export const problems: Problem[] = [
-  ...arrayProblems,
-  ...stringProblems,
-  ...linkedListProblems,
-  ...mathProblems,
-  ...treeProblems,
-  ...graphProblems,
-  ...backtrackingProblems,
-  ...binarySearchProblems,
-  ...stackProblems,
-  ...greedyProblems,
-  ...dpProblems,
+  ...luoguProblems,
 ].sort((a, b) => a.id - b.id);
 
 /**
