@@ -22,9 +22,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Documentation (generated)
-docs/
-
 *.history
 
 package-lock.json
