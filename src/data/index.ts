@@ -1,41 +1,12 @@
 import { Problem, Difficulty, Category, SolutionMethod } from "@/types";
-import { arrayProblems } from "./array";
-import { stringProblems } from "./string";
-import { linkedListProblems } from "./linkedList";
-import { mathProblems } from "./math";
-import { treeProblems } from "./tree";
-import { graphProblems } from "./graph";
-import { backtrackingProblems } from "./backtracking";
-import { binarySearchProblems } from "./binarySearch";
-import { stackProblems } from "./stack";
-import { greedyProblems } from "./greedy";
-import { dpProblems } from "./dp";
 import { luoguProblems } from "./luogu";
 
 /**
  * 合并所有题目数据
- * 当前仅展示洛谷训练营题目
  */
 export const problems: Problem[] = [
   ...luoguProblems,
 ].sort((a, b) => a.id - b.id);
-
-/**
- * 按题型导出
- */
-export {
-  arrayProblems,
-  stringProblems,
-  linkedListProblems,
-  mathProblems,
-  treeProblems,
-  graphProblems,
-  backtrackingProblems,
-  binarySearchProblems,
-  stackProblems,
-  greedyProblems,
-  dpProblems,
-};
 
 /**
  * 工具函数

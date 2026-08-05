@@ -37,7 +37,7 @@ function HomePage() {
         <section className="max-w-2xl mx-auto mb-12 sm:mb-16 lg:mb-20 mt-8 sm:mt-12">
           {/* 图论算法卡片 */}
           <Link
-            to="/problems?category=graph"
+            to="/problems"
             className="group relative bg-white border-2 border-blue-100/50 rounded-3xl p-7 sm:p-9 lg:p-11 shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 overflow-hidden cursor-pointer hover:border-blue-300 block mb-8"
           >
             <div className="absolute top-0 right-0 w-72 h-72 bg-gradient-to-br from-blue-100/40 to-indigo-100/30 rounded-full -mr-36 -mt-36 opacity-60 group-hover:opacity-80 group-hover:scale-110 transition-all duration-500" />

@@ -3,6 +3,9 @@ import { ConfigurableVisualizer } from "@/components/visualizers/ConfigurableVis
 import { CoreIdeaBox } from "@/components/visualizers/CoreIdeaBox";
 import { ProblemInput } from "@/types/visualization";
 import { parseDijkstraInput, generateDijkstraSteps } from "./algorithm";
+import { PerformancePanel, createDijkstraBenchmark } from "@/components/PerformancePanel";
+
+import { getProblemById } from "@/data";
 
 interface DijkstraInput extends ProblemInput {
   input: string;
@@ -61,6 +64,7 @@ function DijkstraVisualizer() {
             value: { input: "6 9 1\n1 2 7\n1 3 9\n1 6 14\n2 3 10\n2 4 15\n3 4 11\n3 6 2\n4 5 6\n5 6 9" },
           },
         ],
+        keyLines: [14,15,24,25,26],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -131,12 +135,14 @@ function DijkstraVisualizer() {
                 idea="每次选择未访问节点中距离最小的节点，对其所有邻居进行松弛操作。dist[v] = min(dist[v], dist[u] + w(u,v))"
                 color="blue"
                 features={[
-                  "时间复杂度 O((V+E) log V)（堆优化）",
-                  "空间复杂度 O(V)",
+                  "可视化实现 O(V²+E)（便于逐步展示）",
+                  "堆优化可达 O((V+E)logV)",
+                  "空间复杂度 O(V+E)",
                   "贪心策略 — 每次选最近的未访问节点",
                   "不允许负权边",
                 ]}
               />
+
 
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">最短路径图</h3>
@@ -240,6 +246,12 @@ function DijkstraVisualizer() {
                     </table>
                   </div>
                 </div>
+
+                {/* 性能对比 */}
+                <PerformancePanel
+                  comparisons={getProblemById(200)?.solution?.comparisons || []}
+                  benchmark={createDijkstraBenchmark()}
+                />
               </div>
             </div>
           );

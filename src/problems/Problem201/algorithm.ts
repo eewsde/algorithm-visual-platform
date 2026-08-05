@@ -67,7 +67,6 @@ export function generateKruskalSteps(input: KruskalInput): VisualizationStep[] {
   }
 
   const selectedEdges: KruskalEdge[] = [];
-  const rejectedEdges: KruskalEdge[] = [];
   let totalWeight = 0;
 
   steps.push({
@@ -80,7 +79,6 @@ export function generateKruskalSteps(input: KruskalInput): VisualizationStep[] {
         status: "pending" as const,
       })),
       selectedEdges: [] as any[],
-      rejectedEdges: [] as any[],
       nodes: Array.from({ length: nodes }, (_, i) => ({
         id: i + 1,
         label: `${i + 1}`,
@@ -162,8 +160,6 @@ export function generateKruskalSteps(input: KruskalInput): VisualizationStep[] {
 
       if (selectedEdges.length === nodes - 1) break;
     } else {
-      rejectedEdges.push(edge);
-
       steps.push({
         id: stepId++,
         description: `× 跳过此边！${edge.from} 和 ${edge.to} 已在同一集合（根都是 ${fromRoot}），选择此边会形成环。`,

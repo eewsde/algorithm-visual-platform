@@ -3,6 +3,7 @@ import { CoreIdeaBox } from "@/components/visualizers/CoreIdeaBox";
 import { ProblemInput } from "@/types/visualization";
 import { parseFloydInput, generateFloydSteps } from "./algorithm";
 
+
 interface FloydInput extends ProblemInput {
   input: string;
 }
@@ -46,6 +47,7 @@ function FloydVisualizer() {
             value: { input: "4\n0 3 0 7\n8 0 2 0\n5 0 0 1\n2 0 0 0" },
           },
         ],
+        keyLines: [4,5,6,7],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -97,6 +99,7 @@ function FloydVisualizer() {
                   "可处理负权边（无负环）",
                 ]}
               />
+
 
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">

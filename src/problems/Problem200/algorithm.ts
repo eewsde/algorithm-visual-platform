@@ -17,7 +17,8 @@ export function parseDijkstraInput(input: string): DijkstraInput {
   const firstLine = lines[0].trim().split(/\s+/);
   const n = parseInt(firstLine[0]);
   const m = parseInt(firstLine[1]);
-  const start = parseInt(firstLine[2]) || 1;
+  const startIdx = parseInt(firstLine[2]);
+  const start = isNaN(startIdx) ? 1 : startIdx;
 
   const edges: Edge[] = [];
   for (let i = 1; i <= m && i < lines.length; i++) {
@@ -41,7 +42,6 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
   const INF = Infinity;
   const dist: number[] = Array(nodes + 1).fill(INF);
   const visited: boolean[] = Array(nodes + 1).fill(false);
-  const prev: (number | null)[] = Array(nodes + 1).fill(null);
   dist[start] = 0;
 
   // Build adjacency list
@@ -53,7 +53,7 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
 
   steps.push({
     id: stepId++,
-    description: `初始化：起点 ${start} 距离设为 0，其余节点距离设为 ∞。将起点加入优先队列。`,
+    description: `初始化：起点 ${start} 距离设为 0，其余节点距离设为 ∞。下一轮将选中起点开始松弛。`,
     data: {
       nodes: Array.from({ length: nodes }, (_, i) => ({
         id: i + 1,
@@ -61,6 +61,7 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
         distance: i + 1 === start ? 0 : INF,
       })),
       edges: edges.map((e) => ({ ...e, isCurrent: false, isVisited: false })),
+      highlightLines: [1, 2, 3, 4, 5],
     },
     variables: {
       current: start,
@@ -102,6 +103,7 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
           isVisited: visited[e.from] && visited[e.to],
         })),
         visited: [...visited.slice(1)],
+        highlightLines: [14, 15, 16, 17, 22, 23],
       },
       variables: {
         current: u,
@@ -113,14 +115,13 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
 
     // Relax edges from u
     const neighbors = adj.get(u) || [];
-    let relaxed = false;
     for (const edge of neighbors) {
       const v = edge.to;
-      if (!visited[v] && dist[u] + edge.weight < dist[v]) {
+      if (visited[v]) continue;
+
+      if (dist[u] + edge.weight < dist[v]) {
         const oldDist = dist[v];
         dist[v] = dist[u] + edge.weight;
-        prev[v] = u;
-        relaxed = true;
 
         steps.push({
           id: stepId++,
@@ -137,6 +138,7 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
               isVisited: visited[e.from] && visited[e.to],
             })),
             visited: [...visited.slice(1)],
+            highlightLines: [25, 26, 27],
           },
           variables: {
             current: u,
@@ -149,38 +151,31 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
           },
           highlightedNodes: [`${u}`, `${v}`],
         });
-      }
-    }
-
-    if (!relaxed && neighbors.length > 0) {
-      // show that no edges were relaxed
-      for (const edge of neighbors) {
-        const v = edge.to;
-        if (!visited[v]) {
-          steps.push({
-            id: stepId++,
-            description: `检查边 ${u}→${v}：dist[${u}]+${edge.weight}=${dist[u] + edge.weight} ≥ dist[${v}]=${dist[v] === INF ? "∞" : dist[v]}，不更新。`,
-            data: {
-              nodes: Array.from({ length: nodes }, (_, i) => ({
-                id: i + 1,
-                label: `${i + 1}`,
-                distance: dist[i + 1],
-              })),
-              edges: edges.map((e) => ({
-                ...e,
-                isCurrent: e.from === u && e.to === v,
-                isVisited: visited[e.from] && visited[e.to],
-              })),
-              visited: [...visited.slice(1)],
-            },
-            variables: {
-              current: u,
-              neighbor: v,
-              visitedCount,
-              dist: dist.slice(1).map((d) => (d === INF ? "∞" : d)),
-            },
-          });
-        }
+      } else {
+        steps.push({
+          id: stepId++,
+          description: `检查边 ${u}→${v}：dist[${u}]+${edge.weight}=${dist[u] + edge.weight} ≥ dist[${v}]=${dist[v] === INF ? "∞" : dist[v]}，不更新。`,
+          data: {
+            nodes: Array.from({ length: nodes }, (_, i) => ({
+              id: i + 1,
+              label: `${i + 1}`,
+              distance: dist[i + 1],
+            })),
+            edges: edges.map((e) => ({
+              ...e,
+              isCurrent: e.from === u && e.to === v,
+              isVisited: visited[e.from] && visited[e.to],
+            })),
+            visited: [...visited.slice(1)],
+            highlightLines: [25, 26],
+          },
+          variables: {
+            current: u,
+            neighbor: v,
+            visitedCount,
+            dist: dist.slice(1).map((d) => (d === INF ? "∞" : d)),
+          },
+        });
       }
     }
   }

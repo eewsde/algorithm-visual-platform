@@ -28,11 +28,10 @@ jobs:
           version: 9
           run_install: true
 
-      # 5. Lint
+      # 4. Lint
       - name: Lint
-        #  这里用的是你 package.json 里的脚本：eslint . ...
         run: pnpm lint
 
-      # 6. Build
+      # 5. Build
       - name: Build
         run: pnpm build

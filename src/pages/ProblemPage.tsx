@@ -95,7 +95,7 @@ function ProblemPage() {
     if (hasNext) {
       handleNext();
     } else {
-      navigate('/');
+      navigate('/problems');
     }
   };
   
@@ -107,8 +107,8 @@ function ProblemPage() {
     return (
       <div className="text-center py-12">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">题目未找到</h2>
-        <Link to="/" className="text-primary-600 hover:underline">
-          返回首页
+        <Link to="/problems" className="text-primary-600 hover:underline">
+          返回题目列表
         </Link>
       </div>
     );
@@ -143,7 +143,7 @@ function ProblemPage() {
         <div className="flex items-center justify-between">
           {/* 左侧：返回按钮 */}
           <Link
-            to="/"
+            to="/problems"
             className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 transition font-medium"
           >
             <ArrowLeft size={20} />

@@ -3,6 +3,7 @@ import { CoreIdeaBox } from "@/components/visualizers/CoreIdeaBox";
 import { ProblemInput } from "@/types/visualization";
 import { parseKnapsackInput, generateKnapsackSteps } from "./algorithm";
 
+
 interface KnapsackInput extends ProblemInput {
   input: string;
 }
@@ -51,6 +52,7 @@ function Knapsack01Visualizer() {
             value: { input: "10 4\n2 3\n3 4\n4 5\n5 6" },
           },
         ],
+        keyLines: [4,5],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -116,6 +118,7 @@ function Knapsack01Visualizer() {
                   "每个物品选或不选",
                 ]}
               />
+
 
               {/* Items list */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">

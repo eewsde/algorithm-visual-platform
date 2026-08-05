@@ -3,6 +3,8 @@ import { ConfigurableVisualizer } from "@/components/visualizers/ConfigurableVis
 import { CoreIdeaBox } from "@/components/visualizers/CoreIdeaBox";
 import { ProblemInput } from "@/types/visualization";
 import { parseKruskalInput, generateKruskalSteps } from "./algorithm";
+import { PerformancePanel, createMSTBenchmark } from "@/components/PerformancePanel";
+import { getProblemById } from "@/data";
 
 interface KruskalInput extends ProblemInput {
   input: string;
@@ -57,6 +59,7 @@ function KruskalVisualizer() {
             value: { input: "5 7\n1 2 3\n1 5 1\n2 3 5\n2 5 4\n3 4 2\n3 5 6\n4 5 7" },
           },
         ],
+        keyLines: [2,11,12,22,23,24,25,27],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -157,6 +160,7 @@ function KruskalVisualizer() {
                 ]}
               />
 
+
               {/* Edge list */}
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">边选择过程</h3>
@@ -206,6 +210,11 @@ function KruskalVisualizer() {
                     />
                   </div>
                 )}
+
+                <PerformancePanel
+                  comparisons={getProblemById(201)?.solution?.comparisons || []}
+                  benchmark={createMSTBenchmark()}
+                />
               </div>
             </div>
           );

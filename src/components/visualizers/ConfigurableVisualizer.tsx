@@ -1,9 +1,10 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useVisualization } from "@/hooks/useVisualization";
 import { VisualizationLayout } from "./VisualizationLayout";
 import { StepVariables, ProblemInput } from "@/types/visualization";
 import { InputType } from "@/hooks/useInputHandler";
 import { InputFieldConfig } from "./TestCaseInput";
+import { useCodeStore } from "@/store/useCodeStore";
 
 /**
  * 可视化配置接口
@@ -20,7 +21,10 @@ export interface VisualizerConfig<TInput extends ProblemInput = ProblemInput, TD
   
   // 自定义变量显示
   customStepVariables?: (variables: StepVariables) => ReactNode;
-  
+
+  // 代码高亮行号（用于自动轮转高亮）
+  keyLines?: number[];
+
   // 渲染函数（核心：完全自定义的视觉呈现）
   render: (props: VisualizerRenderProps<TData>) => ReactNode;
 }
@@ -61,9 +65,29 @@ export function ConfigurableVisualizer<TInput extends ProblemInput = ProblemInpu
     config.defaultInput
   );
 
+  const setHighlightLines = useCodeStore((s) => s.setHighlightLines);
+
   // 提取当前步骤数据
-  const currentData = (visualization.currentStepData?.data || {}) as TData;
+  const currentData = (visualization.currentStepData?.data || {}) as TData & { highlightLines?: number[] };
   const variables = visualization.currentStepData?.variables as StepVariables | undefined;
+  const currentStep = visualization.currentStep;
+  const totalSteps = visualization.steps.length;
+
+  // 同步代码高亮行到全局 store
+  useEffect(() => {
+    if (currentData.highlightLines) {
+      setHighlightLines(currentData.highlightLines);
+    } else if (config.keyLines && config.keyLines.length > 0 && totalSteps > 0) {
+      // 无 per-step 数据时，用轮转方式自动高亮 keyLines
+      const idx = Math.floor((currentStep / Math.max(1, totalSteps)) * config.keyLines.length);
+      const lines = config.keyLines.slice(0, Math.max(1, Math.min(idx + 1, config.keyLines.length)));
+      setHighlightLines(lines);
+    }
+  }, [currentData.highlightLines, setHighlightLines, totalSteps, currentStep, config.keyLines]);
+
+  useEffect(() => {
+    return () => setHighlightLines([]);
+  }, [setHighlightLines]);
 
   // 辅助函数
   const getVariable = <T = any>(name: string, defaultValue?: T): T | undefined => {
