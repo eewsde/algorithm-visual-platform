@@ -14,6 +14,7 @@ interface EdgeStatus {
   from: number;
   to: number;
   weight: number;
+  index: number;
   status: "pending" | "candidate" | "current" | "selected";
 }
 
@@ -60,7 +61,7 @@ function PrimVisualizer() {
             value: { input: "5 7\n1 2 3\n1 5 1\n2 3 5\n2 5 4\n3 4 2\n3 5 6\n4 5 7" },
           },
         ],
-        keyLines: [11,14,15,24,25,26],
+        keyLines: [11, 13, 14, 27, 28, 29],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -156,6 +157,14 @@ function PrimVisualizer() {
                 weight: e.weight,
                 label: `${e.weight}`,
                 isHighlighted: true,
+              });
+            } else {
+              // 尚未进入候选的边：浅灰显示，保证整张图可见
+              graphEdges.push({
+                from: e.from,
+                to: e.to,
+                weight: e.weight,
+                label: `${e.weight}`,
               });
             }
           }

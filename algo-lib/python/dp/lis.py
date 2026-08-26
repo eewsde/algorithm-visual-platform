@@ -17,6 +17,8 @@ import bisect
 def lis_dp(nums):
     """DP 解法 O(n²)"""
     n = len(nums)
+    if n == 0:
+        return 0
     dp = [1] * n
     ans = 1
     for i in range(1, n):

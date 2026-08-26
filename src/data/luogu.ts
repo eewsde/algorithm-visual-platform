@@ -4,7 +4,7 @@ export const luoguProblems: Problem[] = [
   // ===== 图论：最短路 =====
   {
     id: 200,
-    leetcodeNumber: 4779,
+    luoguNumber: "P4779",
     title: "【模板】单源最短路径（标准版）",
     difficulty: Difficulty.MEDIUM,
     category: [Category.GRAPH],
@@ -16,9 +16,9 @@ export const luoguProblems: Problem[] = [
 这是 Dijkstra 算法的标准模板题。`,
     examples: [
       {
-        input: "4 5 1\n1 2 2\n1 3 5\n2 3 1\n2 4 6\n3 4 2",
-        output: "0 2 3 5",
-        explanation: "从节点1出发：到节点2最短距离=2，到节点3最短距离=3(1→2→3)，到节点4最短距离=5(1→2→3→4)",
+        input: "4 6 1\n1 2 2\n2 3 2\n2 4 1\n1 3 5\n3 4 3\n1 4 4",
+        output: "0 2 4 3",
+        explanation: "从节点1出发：到节点2最短距离=2，到节点3最短距离=4（1→2→3），到节点4最短距离=3（1→2→4）。",
       },
     ],
     constraints: [
@@ -73,7 +73,7 @@ export const luoguProblems: Problem[] = [
   return dist.slice(1);
 }`,
       language: "typescript",
-      keyLines: [14, 15, 24, 25, 26],
+      keyLines: [12, 14, 17, 24, 29],
       steps: [
         "初始化dist数组，dist[start]=0，其余为∞",
         "从未访问节点中选择dist最小的节点u",
@@ -126,7 +126,7 @@ export const luoguProblems: Problem[] = [
   // ===== 图论：最小生成树 =====
   {
     id: 201,
-    leetcodeNumber: 3366,
+    luoguNumber: "P3366",
     title: "【模板】最小生成树",
     difficulty: Difficulty.MEDIUM,
     category: [Category.GRAPH],
@@ -191,7 +191,7 @@ export const luoguProblems: Problem[] = [
   return edgeCount === n - 1 ? totalWeight : -1;
 }`,
       language: "typescript",
-      keyLines: [2, 11, 12, 22, 23, 24, 25, 27],
+      keyLines: [3, 5, 22, 23, 24, 25, 27],
       steps: [
         "将所有边按权值从小到大排序",
         "初始化并查集，每个节点自成一个集合",
@@ -235,89 +235,89 @@ export const luoguProblems: Problem[] = [
   // ===== 图论：Floyd 传递闭包 =====
   {
     id: 202,
-    leetcodeNumber: 3611,
-    title: "【模板】传递闭包 / Floyd 全源最短路",
+    luoguNumber: "B3611",
+    title: "【模板】传递闭包",
     difficulty: Difficulty.MEDIUM,
     category: [Category.GRAPH],
     methods: [SolutionMethod.DYNAMIC_PROGRAMMING],
-    description: `给定一张 n 个点的有向图，求出该图的传递闭包。
+    description: `给定一张点数为 n 的有向图的邻接矩阵（图中不包含自环），求该有向图的传递闭包。
 
-传递闭包：如果从 i 到 j 存在一条路径（不一定是直接边），则认为 i 可达 j。
+邻接矩阵 a[i][j] = 1 表示 i 到 j 存在直接连边，0 表示没有。传递闭包 b[i][j] = 1 表示 i 可以直接或间接到达 j，0 表示无法到达。
 
-Floyd-Warshall 算法是求解全源最短路径的经典 DP 算法，核心思想是：对于每对节点 (i, j)，依次尝试以每个节点 k 作为中间节点来缩短路径。
+Floyd-Warshall 的布尔版本：对于每对节点 (i, j)，依次尝试以每个节点 k 作为中间节点——若 i 可达 k 且 k 可达 j，则 i 可达 j。
 
-dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])`,
+reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])`,
     examples: [
       {
-        input: "3\n0 1 0\n0 0 1\n0 0 0",
-        output: "1 1 1\n0 1 1\n0 0 1",
-        explanation: "节点1可以到2；节点2可以到3；因此节点1可以通过2到达3（传递闭包）",
+        input: "4\n0 0 0 1\n1 0 0 0\n0 0 0 1\n0 1 0 0",
+        output: "1 1 0 1\n1 1 0 1\n1 1 0 1\n1 1 0 1",
+        explanation: "1→4→2→1 构成环：节点 1、2、4 都能间接到达自己（对角线为 1）；节点 3 不在任何环上，b[3][3]=0。所有点都可到达 1、2、4，但都无法到达 3。",
       },
     ],
     constraints: [
       "1 ≤ n ≤ 100",
-      "图由邻接矩阵给出",
+      "a[i][j] ∈ {0,1}，且 a[i][i] = 0（无自环）",
     ],
     hints: [
       "三重循环：for k: for i: for j",
-      "dist[i][j] = dist[i][j] | (dist[i][k] & dist[k][j])（传递闭包）",
-      "dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])（最短路径）",
+      "reach[i][j] = reach[i][j] | (reach[i][k] & reach[k][j])",
+      "对角线不一定为 1：只有存在经过 i 的环时，i 才能间接到达自己",
       "注意中间节点k必须在最外层循环",
     ],
     solution: {
-      methodName: "Floyd-Warshall DP",
+      methodName: "Floyd 布尔版（传递闭包）",
       methodDescription:
-        "Floyd算法使用DP思想，dist[k][i][j]表示只经过前k个节点时从i到j的最短距离。可以优化为二维数组：dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])。",
-      code: `function floyd(n: number, graph: number[][]): number[][] {
-  const dist = graph.map(row => [...row]);
+        "把可达性看成布尔值，用 Floyd 的三重循环做传递：reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])。若 i 能到 k 且 k 能到 j，则 i 就能到 j。注意对角线不需要预先置 1——节点在环上时会自动变为 1。",
+      code: `function transitiveClosure(n: number, graph: number[][]): number[][] {
+  const reach = graph.map(row => [...row]);
 
   for (let k = 0; k < n; k++) {
     for (let i = 0; i < n; i++) {
       for (let j = 0; j < n; j++) {
-        if (dist[i][k] + dist[k][j] < dist[i][j]) {
-          dist[i][j] = dist[i][k] + dist[k][j];
+        if (reach[i][k] && reach[k][j]) {
+          reach[i][j] = 1;
         }
       }
     }
   }
 
-  return dist;
+  return reach;
 }`,
       language: "typescript",
       keyLines: [4, 5, 6, 7],
       steps: [
-        "将原图的邻接矩阵复制为dist",
+        "将原图的邻接矩阵复制为reach",
         "枚举中间节点k（最外层循环）",
         "枚举起点i和终点j",
-        "尝试通过k中转：dist[i][j]=min(dist[i][j], dist[i][k]+dist[k][j])",
-        "三重循环完成后dist即为全源最短路径",
+        "若 i 可达 k 且 k 可达 j，则 reach[i][j] = 1",
+        "三重循环完成后reach即为传递闭包（环上节点的对角线自动变1）",
       ],
       advantages: [
         "时间复杂度O(n³)",
         "空间复杂度O(n²)",
         "代码极其简洁",
-        "可同时求出所有点对的最短路径",
+        "可同时求出所有点对的可达性",
       ],
       timeComplexity: { value: "O(n³)", description: "三重循环" },
-      spaceComplexity: { value: "O(n²)", description: "距离矩阵" },
+      spaceComplexity: { value: "O(n²)", description: "可达矩阵" },
       comparisons: [
         {
-          name: "Floyd-Warshall",
-          description: "DP算法，求全源最短路径",
+          name: "Floyd 布尔版",
+          description: "三重循环布尔传递，一次求出所有点对可达性",
           timeComplexity: "O(n³)",
           spaceComplexity: "O(n²)",
           isRecommended: true,
-          pros: ["代码简洁", "求全源最短路径", "可处理负权边"],
+          pros: ["代码简洁", "一次求出全源可达性"],
           cons: ["O(n³)在大图上效率低"],
         },
         {
-          name: "Dijkstra × n次",
-          description: "对每个节点跑一次Dijkstra",
-          timeComplexity: "O(n×(V+E)logV)",
-          spaceComplexity: "O(V+E)",
+          name: "DFS/BFS × n次",
+          description: "对每个节点跑一次遍历标记可达节点",
+          timeComplexity: "O(n(n+m))",
+          spaceComplexity: "O(n+m)",
           isRecommended: false,
           pros: ["稀疏图效率更高"],
-          cons: ["不能处理负权边", "实现复杂"],
+          cons: ["实现更繁琐"],
         },
       ],
     },
@@ -326,7 +326,7 @@ dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])`,
   // ===== 动态规划：01背包 =====
   {
     id: 203,
-    leetcodeNumber: 1048,
+    luoguNumber: "P1048",
     title: "采药（01背包）",
     difficulty: Difficulty.EASY,
     category: [Category.ARRAY],
@@ -393,7 +393,7 @@ dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])`,
   // ===== 图论：Prim 最小生成树 =====
   {
     id: 204,
-    leetcodeNumber: 3366,
+    luoguNumber: "P3366",
     title: "【模板】最小生成树（Prim算法）",
     difficulty: Difficulty.MEDIUM,
     category: [Category.GRAPH],
@@ -462,7 +462,7 @@ Prim 算法是一种基于节点的贪心策略：从任意起点出发，每次
   return edgeCount === n - 1 ? totalWeight : -1;
 }`,
       language: "typescript",
-      keyLines: [11, 14, 15, 24, 25, 26],
+      keyLines: [11, 13, 14, 27, 28, 29],
       steps: [
         "初始化：将起点（节点1）加入已选集合",
         "扫描所有已选节点的出边，找出连接到未选节点的边",
@@ -506,18 +506,20 @@ Prim 算法是一种基于节点的贪心策略：从任意起点出发，每次
   // ===== 图论：图的遍历（BFS/DFS）=====
   {
     id: 205,
-    leetcodeNumber: 5318,
+    luoguNumber: "P5318",
     title: "图的遍历（BFS与DFS）",
     difficulty: Difficulty.EASY,
     category: [Category.GRAPH],
     methods: [SolutionMethod.BFS, SolutionMethod.DFS],
-    description: `给定一个无向图，从节点1出发，分别使用 BFS（广度优先搜索）和 DFS（深度优先搜索）进行遍历，观察两种策略的访问顺序差异。
+    description: `小 K 喜欢翻看洛谷博客获取知识。每篇文章可能有若干篇参考文献。如果看了某篇文章，就一定会去看它的参考文献（看过的跳过）。
 
-BFS 使用队列（先进先出），按层次逐层访问，保证先访问距离起点近的节点。
-DFS 使用递归/栈（后进先出），沿一条路径深入到底再回溯。
-
-这是图论最基础的两种遍历策略，也是后续连通性、拓扑排序、最短路径等算法的基础。`,
+洛谷博客里一共有 n 篇文章（编号 1 到 n）以及 m 条引用关系，X→Y 表示文章 X 有参考文献 Y。目前已经打开了编号为 1 的文章，请不重复、不遗漏地看完所有能看到的文章——对这个有向图分别进行 DFS 和 BFS，并输出遍历结果。如果有很多篇文章可以参阅，先看编号较小的那篇。`,
     examples: [
+      {
+        input: "8 9\n1 2\n1 3\n1 4\n2 5\n2 6\n3 7\n4 7\n4 8\n7 8",
+        output: "DFS: 1→2→5→6→3→7→8→4\nBFS: 1→2→3→4→5→6→7→8",
+        explanation: "官方样例：DFS 沿引用链深入（1→2→5→6→3→7→8→4），BFS 按层遍历（1→2→3→4→5→6→7→8），顺序不同。",
+      },
       {
         input: "6 7\n1 2\n1 3\n2 4\n2 5\n3 6\n4 5\n5 6",
         output: "BFS: 1→2→3→4→5→6\nDFS: 1→2→4→5→6→3",
@@ -525,9 +527,9 @@ DFS 使用递归/栈（后进先出），沿一条路径深入到底再回溯。
       },
     ],
     constraints: [
-      "1 ≤ n ≤ 100",
-      "1 ≤ m ≤ n(n-1)/2",
-      "图连通",
+      "1 ≤ n ≤ 10^5",
+      "1 ≤ m ≤ 10^6",
+      "图不一定连通（从 1 出发只遍历可达部分）",
     ],
     hints: [
       "BFS：用队列维护待访问节点",
@@ -576,7 +578,7 @@ function dfs(n: number, adj: Map<number, number[]>, start: number): number[] {
   return order;
 }`,
       language: "typescript",
-      keyLines: [8, 9, 23, 25, 26],
+      keyLines: [8, 9, 23, 26, 27, 30],
       steps: [
         "初始化 visited 数组",
         "BFS：起点入队，循环出队→访问→邻居入队",
@@ -613,143 +615,119 @@ function dfs(n: number, adj: Map<number, number[]>, start: number): number[] {
     },
   },
 
-  // ===== 图论：拓扑排序 =====
+  // ===== 图论：拓扑排序 + DP（杂务） =====
   {
     id: 206,
-    leetcodeNumber: 1113,
-    title: "拓扑排序 / 课程表",
+    luoguNumber: "P1113",
+    title: "【USACO02FEB】杂务（拓扑排序 + DP）",
     difficulty: Difficulty.MEDIUM,
     category: [Category.GRAPH],
-    methods: [SolutionMethod.BFS, SolutionMethod.DFS],
-    description: `给定一个有向图，请输出任意一个拓扑排序的结果。如果图中存在环，则无法进行拓扑排序。
+    methods: [SolutionMethod.DYNAMIC_PROGRAMMING, SolutionMethod.BFS],
+    description: `John 的农场在给奶牛挤奶前有很多杂务要完成，每项杂务都需要一定的时间。有些杂务必须在另一些杂务完成的情况下才能进行（准备工作）。至少有一项杂务不要求准备工作，标记为杂务 1。
 
-拓扑排序是将有向无环图（DAG）的所有节点排成一个线性序列，使得对于每条有向边 u→v，u 在序列中都出现在 v 之前。
+杂务 k (k>1) 的准备工作只可能在杂务 1 至 k-1 中——因此按编号顺序天然是拓扑序。互相没有关系的杂务可以同时进行（工人足够多）。请计算所有杂务都被完成的最短时间。
 
-常用场景：课程选修顺序、项目任务调度、编译器依赖解析。
-
-本可视化使用 Kahn 算法（BFS实现），通过维护入度数组，逐步删除入度为0的节点。`,
+f[i] = len[i] + max(f[前置])，答案 = max(f[i])，即 DAG 上的关键路径。`,
     examples: [
       {
-        input: "6 7\n1 2\n1 3\n2 4\n3 4\n4 5\n5 6\n3 6",
-        output: "1 → 2 → 3 → 4 → 5 → 6",
-        explanation: "节点1入度=0开始，依次删除出边，形成合法的拓扑序列。",
+        input: "7\n1 5 0\n2 2 1 0\n3 3 2 0\n4 6 1 0\n5 1 2 4 0\n6 8 2 4 0\n7 4 3 5 6 0",
+        output: "23",
+        explanation: "官方样例。f[1]=5，f[2]=7，f[3]=10，f[4]=11，f[5]=12，f[6]=19，f[7]=4+max(10,12,19)=23。杂务 7 依赖的链条 1→4→6→7（或 1→2→4→6→7）是决定总时长的关键路径。",
       },
     ],
     constraints: [
-      "1 ≤ n ≤ 100",
-      "1 ≤ m ≤ n(n-1)",
-      "图可能包含环",
+      "3 ≤ n ≤ 10,000",
+      "1 ≤ len ≤ 100",
+      "每个杂务的前置杂务不超过 100 个",
     ],
     hints: [
-      "计算每个节点的入度",
-      "入度为0的节点入队",
-      "出队→删除出边→邻居入度-1",
-      "入度变为0则入队",
-      "队列为空时若未处理完所有节点则存在环",
+      "杂务 k 的前置只在 1..k-1 中：按编号顺序即拓扑序",
+      "f[i] = len[i] + max(f[前置])",
+      "答案 = max(f[i])（关键路径长度）",
+      "也可以建图后跑 Kahn 拓扑排序，入度减到 0 时更新 f",
     ],
     solution: {
-      methodName: "Kahn算法（BFS拓扑排序）",
+      methodName: "拓扑序 DP（关键路径）",
       methodDescription:
-        "计算入度 → 入度0入队 → 出队处理 → 删除出边(邻居入度-1) → 新入度0入队 → 重复。若最终未处理完所有节点则存在环。",
-      code: `function topologicalSort(n: number, edges: [number, number][]): number[] {
-  const inDegree = new Array(n + 1).fill(0);
-  const adj: Map<number, number[]> = new Map();
-  for (let i = 1; i <= n; i++) adj.set(i, []);
-  for (const [u, v] of edges) {
-    adj.get(u)!.push(v);
-    inDegree[v]++;
-  }
+        "因为杂务 k 的前置只在 1..k-1 中，按编号顺序计算就满足拓扑序：处理杂务 k 时其所有前置的 f 都已算出。f[k] = len[k] + max(f[前置])，所有 f 的最大值就是答案。",
+      code: `function chores(n: number, tasks: { id: number; len: number; prereqs: number[] }[]): number {
+  const finish = new Array(n + 1).fill(0);
+  let answer = 0;
 
-  const queue: number[] = [];
-  for (let i = 1; i <= n; i++) {
-    if (inDegree[i] === 0) queue.push(i);
-  }
-
-  const result: number[] = [];
-  while (queue.length > 0) {
-    const u = queue.shift()!;
-    result.push(u);
-    for (const v of adj.get(u)!) {
-      if (--inDegree[v] === 0) queue.push(v);
+  for (const task of tasks) { // 按编号顺序，天然拓扑序
+    let maxPre = 0;
+    for (const pre of task.prereqs) {
+      maxPre = Math.max(maxPre, finish[pre]);
     }
+    finish[task.id] = task.len + maxPre;
+    answer = Math.max(answer, finish[task.id]);
   }
 
-  return result.length === n ? result : []; // 空数组表示有环
+  return answer;
 }`,
       language: "typescript",
-      keyLines: [10, 11, 16, 18, 19, 20],
+      keyLines: [5, 6, 8, 10, 11],
       steps: [
-        "构建邻接表和入度数组",
-        "所有入度为0的节点入队",
-        "出队一个节点，加入结果序列",
-        "删除该节点的所有出边（邻居入度-1）",
-        "邻居入度变为0则入队",
-        "重复直到队列为空",
+        "读入 n 个杂务（序号、耗时、前置列表）",
+        "按编号顺序处理（前置只在 1..k-1 中，天然拓扑序）",
+        "取所有前置 f 的最大值 maxPre",
+        "f[k] = len[k] + maxPre",
+        "用 f[k] 更新全局答案，最后输出 max(f[i])",
       ],
       advantages: [
-        "时间复杂度 O(V+E)",
-        "空间复杂度 O(V+E)",
-        "可检测环（结果长度 < n 则有环）",
-        "BFS实现直观易懂",
+        "时间复杂度 O(n + 前置总数)",
+        "空间复杂度 O(n)",
+        "无需显式拓扑排序：编号顺序即拓扑序",
+        "关键路径思想，可并行杂务自然处理",
       ],
-      timeComplexity: { value: "O(V+E)", description: "每个节点和边处理一次" },
-      spaceComplexity: { value: "O(V+E)", description: "邻接表 + 入度数组 + 队列" },
+      timeComplexity: { value: "O(n + m)", description: "每个杂务和每条前置关系处理一次" },
+      spaceComplexity: { value: "O(n)", description: "f 数组" },
       comparisons: [
         {
-          name: "Kahn算法（BFS）",
-          description: "基于入度维护和队列",
-          timeComplexity: "O(V+E)",
-          spaceComplexity: "O(V+E)",
+          name: "顺序 DP（编号即拓扑序）",
+          description: "利用前置只在 1..k-1 的性质直接按编号计算",
+          timeComplexity: "O(n + m)",
+          spaceComplexity: "O(n)",
           isRecommended: true,
-          pros: ["直观", "易实现", "天然检测环"],
-          cons: [],
+          pros: ["代码最简洁", "无需建图"],
+          cons: ["依赖题目给出的顺序性质"],
         },
         {
-          name: "DFS后序遍历",
-          description: "DFS + 逆后序 = 拓扑排序",
-          timeComplexity: "O(V+E)",
-          spaceComplexity: "O(V)",
+          name: "Kahn 拓扑排序 + DP",
+          description: "显式建图、维护入度，入度减到 0 时更新 f",
+          timeComplexity: "O(n + m)",
+          spaceComplexity: "O(n + m)",
           isRecommended: false,
-          pros: ["空间稍小"],
-          cons: ["递归实现", "需额外反转"],
+          pros: ["通用：不依赖输入顺序", "适用一般 DAG"],
+          cons: ["需要建图和队列"],
         },
       ],
     },
   },
 
-  // ===== 动态规划：最长递增子序列 (LIS) =====
+  // ===== 动态规划：最长上升子序列 (LIS) =====
   {
     id: 207,
-    leetcodeNumber: 300,
-    title: "最长递增子序列（LIS）",
-    difficulty: Difficulty.MEDIUM,
+    luoguNumber: "B3637",
+    title: "最长上升子序列（LIS）",
+    difficulty: Difficulty.EASY,
     category: [Category.ARRAY],
     methods: [SolutionMethod.DYNAMIC_PROGRAMMING],
-    description: `给你一个整数数组 nums，找到其中最长严格递增子序列的长度。
+    description: `这是一个简单的动态规划模板题。
 
-子序列是由数组派生而来的序列，删除（或不删除）数组中的元素而不改变其余元素的顺序。
+给出一个由 n (n ≤ 5000) 个不超过 10^6 的正整数组成的序列。请输出这个序列的最长上升子序列的长度。
 
-LIS 是动态规划的经典入门问题，状态定义直观：dp[i] = 以 nums[i] 结尾的最长递增子序列长度。`,
+最长上升子序列是指，从原序列中按顺序尽可能多取出一些数字排在一起，这些数字是逐渐增大的。`,
     examples: [
       {
-        input: "10 9 2 5 3 7 101 18",
+        input: "6\n1 2 4 1 3 4",
         output: "4",
-        explanation: "最长递增子序列是 [2, 3, 7, 101]，长度为4。",
-      },
-      {
-        input: "0 1 0 3 2 3",
-        output: "4",
-        explanation: "最长递增子序列是 [0, 1, 2, 3]，长度为4。",
-      },
-      {
-        input: "7 7 7 7 7",
-        output: "1",
-        explanation: "所有元素相同，严格递增子序列只能是单个元素。",
+        explanation: "分别取出 1、2、3、4 即可，它们构成最长的上升子序列。",
       },
     ],
     constraints: [
-      "1 <= nums.length <= 2500",
-      "-10^4 <= nums[i] <= 10^4",
+      "1 ≤ n ≤ 5000",
+      "1 ≤ a[i] ≤ 10^6",
     ],
     hints: [
       "dp[i] 表示以 nums[i] 结尾的最长递增子序列长度",
@@ -819,99 +797,89 @@ LIS 是动态规划的经典入门问题，状态定义直观：dp[i] = 以 nums
   // ===== 动态规划：最长公共子序列 (LCS) =====
   {
     id: 208,
-    leetcodeNumber: 1143,
-    title: "最长公共子序列（LCS）",
+    luoguNumber: "P1439",
+    title: "【模板】最长公共子序列",
     difficulty: Difficulty.MEDIUM,
-    category: [Category.STRING],
-    methods: [SolutionMethod.DYNAMIC_PROGRAMMING],
-    description: `给定两个字符串 text1 和 text2，返回这两个字符串的最长公共子序列的长度。
+    category: [Category.ARRAY],
+    methods: [SolutionMethod.DYNAMIC_PROGRAMMING, SolutionMethod.BINARY_SEARCH],
+    description: `给出 1,2,…,n 的两个排列 P1 和 P2，求它们的最长公共子序列。
 
-子序列由原字符串在不改变字符相对顺序的情况下删除某些字符后形成。
-
-LCS 是最经典的二维动态规划问题，状态转移优雅：字符匹配则斜上+1，否则取左上的最大值。`,
+这是 LCS 的经典模板题。两个序列都是 1..n 的排列这一性质非常关键：可以把 P1 中每个数的位置映射出来，再把 P2 的每个数换成它在 P1 中的位置——LCS 就转化成了最长上升子序列（LIS），可以用 O(n log n) 求解。`,
     examples: [
       {
-        input: "abcde\nace",
-        output: "3（LCS = ace）",
-        explanation: "text1='abcde', text2='ace'，最长公共子序列是 'ace'。",
-      },
-      {
-        input: "abc\nabc",
-        output: "3（LCS = abc）",
-        explanation: "两字符串完全相同。",
-      },
-      {
-        input: "abc\ndef",
-        output: "0",
-        explanation: "没有公共字符。",
+        input: "5\n3 2 1 4 5\n1 2 3 4 5",
+        output: "3",
+        explanation: "官方样例。P1=[3,2,1,4,5]，P2=[1,2,3,4,5]，最长公共子序列为 [3,4,5]（或 [1,4,5]、[2,4,5]），长度为 3。",
       },
     ],
     constraints: [
-      "1 <= text1.length, text2.length <= 1000",
-      "text1 和 text2 仅由小写英文字符组成",
+      "1 ≤ n ≤ 10^5",
+      "每行都是 1..n 的一个排列",
     ],
     hints: [
-      "dp[i][j] = text1[0..i-1] 与 text2[0..j-1] 的LCS长度",
-      "text1[i-1] == text2[j-1] → dp[i][j] = dp[i-1][j-1] + 1",
-      "text1[i-1] ≠ text2[j-1] → dp[i][j] = max(dp[i-1][j], dp[i][j-1])",
-      "从 dp[m][n] 回溯可得LCS序列",
+      "一般解法：二维 DP，dp[i][j] = 相等?左上+1 : max(上,左)，O(n²)",
+      "排列性质：P2 的元素换成在 P1 中的位置后，LCS 变成 LIS",
+      "LIS 可用贪心+二分做到 O(n log n)，能通过 n=10^5 的数据",
+      "可视化演示用 O(n²) DP 展示状态转移，输入 n 限制为 60 以内",
     ],
     solution: {
-      methodName: "二维动态规划",
+      methodName: "排列转 LIS（O(n log n)）",
       methodDescription:
-        "dp[i][j] 表示 text1 前 i 个字符与 text2 前 j 个字符的 LCS 长度。字符匹配时 dp[i][j] = dp[i-1][j-1] + 1，否则取 max(dp[i-1][j], dp[i][j-1])。",
-      code: `function longestCommonSubsequence(text1: string, text2: string): number {
-  const m = text1.length;
-  const n = text2.length;
-  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+        "因为两个序列都是 1..n 的排列：记录 P1 中每个数的位置 pos[x]，把 P2 的每个数换成 pos[x]，则两排列的公共子序列恰好对应一个在 P1 中位置递增的序列——LCS 转化为 LIS。用 tails 数组 + 二分求严格 LIS，时间复杂度 O(n log n)。",
+      code: `function lcsPermutation(n: number, p1: number[], p2: number[]): number {
+  const pos = new Array(n + 1).fill(0);
+  for (let i = 0; i < n; i++) pos[p1[i]] = i + 1; // p1 中每个数的位置
 
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      if (text1[i - 1] === text2[j - 1]) {
-        dp[i][j] = dp[i - 1][j - 1] + 1;
-      } else {
-        dp[i][j] = Math.max(dp[i - 1][j], dp[i][j - 1]);
-      }
+  const tails: number[] = []; // 贪心维护的 LIS 尾巴数组
+  for (const x of p2) {
+    const idx = pos[x]; // 转成在 p1 中的位置
+    let l = 0, r = tails.length;
+    while (l < r) { // 二分第一个 >= idx 的位置
+      const mid = (l + r) >> 1;
+      if (tails[mid] < idx) l = mid + 1;
+      else r = mid;
     }
+    if (l === tails.length) tails.push(idx);
+    else tails[l] = idx;
   }
 
-  return dp[m][n];
+  return tails.length;
 }`,
       language: "typescript",
-      keyLines: [5, 8, 9, 11, 13],
+      keyLines: [3, 5, 7, 9, 14],
       steps: [
-        "初始化 dp 表 (m+1)×(n+1)，第一行/列均为0",
-        "遍历 text1 的每个字符（i=1..m）",
-        "遍历 text2 的每个字符（j=1..n）",
-        "字符匹配 → dp[i][j] = dp[i-1][j-1] + 1",
-        "字符不匹配 → dp[i][j] = max(dp[i-1][j], dp[i][j-1])",
-        "从 dp[m][n] 回溯可得LCS序列",
+        "记录 P1 中每个数的位置 pos[x]",
+        "把 P2 的每个数换成它在 P1 中的位置 idx",
+        "LCS 问题转化为求 idx 序列的最长上升子序列",
+        "tails 数组 + 二分维护 LIS（贪心）",
+        "tails 的长度即答案（LCS 长度）",
       ],
       advantages: [
-        "经典二维DP，状态转移清晰",
-        "可回溯输出具体LCS序列",
-        "是编辑距离、序列比对等问题的基础",
+        "时间复杂度 O(n log n)，可通过 n=10^5",
+        "空间复杂度 O(n)",
+        "利用排列性质将 LCS 转化为 LIS",
+        "贪心 + 二分是竞赛标准写法",
       ],
-      timeComplexity: { value: "O(m×n)", description: "双重循环" },
-      spaceComplexity: { value: "O(m×n)", description: "可优化到 O(min(m,n))" },
+      timeComplexity: { value: "O(n log n)", description: "每个元素一次二分" },
+      spaceComplexity: { value: "O(n)", description: "pos 数组 + tails 数组" },
       comparisons: [
         {
-          name: "二维DP",
-          description: "完整DP表，可回溯",
-          timeComplexity: "O(m×n)",
-          spaceComplexity: "O(m×n)",
+          name: "排列转 LIS",
+          description: "利用排列性质转化后贪心+二分",
+          timeComplexity: "O(n log n)",
+          spaceComplexity: "O(n)",
           isRecommended: true,
-          pros: ["直观", "可回溯LCS序列"],
-          cons: ["空间较大"],
+          pros: ["能通过 n=10^5", "代码简洁"],
+          cons: ["依赖两个序列都是排列"],
         },
         {
-          name: "滚动数组优化",
-          description: "只保留两行，空间O(min(m,n))",
-          timeComplexity: "O(m×n)",
-          spaceComplexity: "O(min(m,n))",
+          name: "二维 DP",
+          description: "一般 LCS 解法（可视化演示用它）",
+          timeComplexity: "O(n²)",
+          spaceComplexity: "O(n²)",
           isRecommended: false,
-          pros: ["空间小"],
-          cons: ["无法回溯LCS序列"],
+          pros: ["适用任意序列", "直观、可回溯"],
+          cons: ["n=10^5 会超时/超内存"],
         },
       ],
     },

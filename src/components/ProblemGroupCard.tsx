@@ -19,7 +19,8 @@ export function ProblemGroupCard({
   getDifficultyColor,
   getDifficultyText,
 }: ProblemGroupCardProps) {
-  const { isCompleted, isFavorite } = useAppStore();
+  const isCompleted = useAppStore((s) => s.isCompleted);
+  const isFavorite = useAppStore((s) => s.isFavorite);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col max-h-[40rem]">
@@ -59,7 +60,7 @@ export function ProblemGroupCard({
                 )}
                 
                 <span className="text-gray-500 font-mono text-sm flex-shrink-0">
-                  P{problem.leetcodeNumber}
+                  {problem.luoguNumber}
                 </span>
                 
                 <Tooltip title={problem.title} placement="top">

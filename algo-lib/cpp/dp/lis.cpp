@@ -18,6 +18,7 @@ using namespace std;
 // DP 解法 O(n²)
 int lis_dp(const vector<int>& nums) {
     int n = nums.size();
+    if (n == 0) return 0;
     vector<int> dp(n, 1);
     int ans = 1;
 

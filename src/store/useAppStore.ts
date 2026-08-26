@@ -39,7 +39,7 @@ interface AppState extends ProgressState {
   resetProgress: () => void;
 
   // 统计方法
-  getProgressStats: (total?: number) => {
+  getProgressStats: (total: number) => {
     total: number;
     completed: number;
     inProgress: number;
@@ -148,9 +148,9 @@ export const useAppStore = create<AppState>()(
       },
 
       // 获取进度统计
-      getProgressStats: (total?: number) => {
+      getProgressStats: (total) => {
         const state = get();
-        const totalProblems = total ?? 100; // 默认100，可以从外部传入实际题目数量
+        const totalProblems = total;
         const completed = state.completedProblems.size;
         const inProgress = state.inProgressProblems.size;
         const favorite = state.favoriteProblems.size;
@@ -167,40 +167,54 @@ export const useAppStore = create<AppState>()(
       },
     }),
     {
-      name: "leetcode-view-storage", // localStorage key
+      name: "luogu-algo-vis-storage", // localStorage key
       // 自定义序列化，处理 Set 类型
       storage: {
         getItem: (name) => {
-          const str = localStorage.getItem(name);
-          if (!str) return null;
-          const parsed = JSON.parse(str);
-          // 将数组转换回 Set
-          return {
-            state: {
-              ...parsed.state,
-              completedProblems: new Set(parsed.state.completedProblems || []),
-              inProgressProblems: new Set(
-                parsed.state.inProgressProblems || []
-              ),
-              favoriteProblems: new Set(parsed.state.favoriteProblems || []),
-            },
-            version: parsed.version,
-          };
+          try {
+            const str = localStorage.getItem(name);
+            if (!str) return null;
+            const parsed = JSON.parse(str);
+            // 将数组转换回 Set
+            return {
+              state: {
+                ...parsed.state,
+                completedProblems: new Set(parsed.state.completedProblems || []),
+                inProgressProblems: new Set(
+                  parsed.state.inProgressProblems || []
+                ),
+                favoriteProblems: new Set(parsed.state.favoriteProblems || []),
+              },
+              version: parsed.version,
+            };
+          } catch {
+            return null;
+          }
         },
         setItem: (name, value) => {
-          // 将 Set 转换为数组以便序列化
-          const toStore = {
-            state: {
-              ...value.state,
-              completedProblems: Array.from(value.state.completedProblems),
-              inProgressProblems: Array.from(value.state.inProgressProblems),
-              favoriteProblems: Array.from(value.state.favoriteProblems),
-            },
-            version: value.version,
-          };
-          localStorage.setItem(name, JSON.stringify(toStore));
+          try {
+            // 将 Set 转换为数组以便序列化
+            const toStore = {
+              state: {
+                ...value.state,
+                completedProblems: Array.from(value.state.completedProblems),
+                inProgressProblems: Array.from(value.state.inProgressProblems),
+                favoriteProblems: Array.from(value.state.favoriteProblems),
+              },
+              version: value.version,
+            };
+            localStorage.setItem(name, JSON.stringify(toStore));
+          } catch {
+            // localStorage 不可用时静默降级（隐私模式/配额满）
+          }
         },
-        removeItem: (name) => localStorage.removeItem(name),
+        removeItem: (name) => {
+          try {
+            localStorage.removeItem(name);
+          } catch {
+            // 静默降级
+          }
+        },
       },
     }
   )

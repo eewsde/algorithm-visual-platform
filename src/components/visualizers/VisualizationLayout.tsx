@@ -20,6 +20,8 @@ export interface VisualizationLayoutProps<T extends ProblemInput> {
   testCases?: Array<{ label: string; value: T }>;
   /** 步骤说明面板的自定义变量显示（可选） */
   customStepVariables?: (variables: StepVariables) => React.ReactNode;
+  /** 步骤生成错误信息（来自 useVisualization，非空时显示错误提示） */
+  error?: string | null;
   /** 子组件（题目特定的可视化内容） */
   children: React.ReactNode;
 }
@@ -54,6 +56,7 @@ export function VisualizationLayout<T extends ProblemInput>({
   inputFields,
   testCases,
   customStepVariables,
+  error,
   children,
 }: VisualizationLayoutProps<T>) {
   // 使用输入处理 Hook
@@ -89,6 +92,14 @@ export function VisualizationLayout<T extends ProblemInput>({
 
       {/* 可视化区域 */}
       <div className="flex-1 overflow-y-auto p-6 space-y-6">
+        {/* 输入错误提示（算法解析失败时显示） */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700">
+            <span className="font-semibold">输入有误：</span>
+            {error}
+          </div>
+        )}
+
         {/* 测试用例输入 */}
         <TestCaseInput
           fields={inputFields}

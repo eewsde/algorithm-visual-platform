@@ -13,7 +13,7 @@ function LISVisualizer() {
     <ConfigurableVisualizer<LISInputData, any>
       config={{
         defaultInput: {
-          input: "10 9 2 5 3 7 101 18",
+          input: "6\n1 2 4 1 3 4",
         },
         algorithm: (input) => {
           return generateLISSteps(parseLISInput(input.input));
@@ -23,21 +23,25 @@ function LISVisualizer() {
           {
             type: "string",
             key: "input",
-            label: "数组（空格或逗号分隔）",
-            placeholder: "10 9 2 5 3 7 101 18",
+            label: "数组（空格/逗号分隔；或首行 n + 第二行 n 个数）",
+            placeholder: "6\n1 2 4 1 3 4",
           },
         ],
         testCases: [
           {
-            label: "示例1",
-            value: { input: "10 9 2 5 3 7 101 18" },
+            label: "示例1（洛谷官方样例）",
+            value: { input: "6\n1 2 4 1 3 4" },
           },
           {
-            label: "示例2",
+            label: "示例2（同样例·纯数组格式）",
+            value: { input: "1 2 4 1 3 4" },
+          },
+          {
+            label: "示例3（含重复值）",
             value: { input: "0 1 0 3 2 3" },
           },
           {
-            label: "示例3",
+            label: "示例4（全部相等）",
             value: { input: "7 7 7 7 7" },
           },
         ],
@@ -101,7 +105,9 @@ function LISVisualizer() {
           const updated = data.updated || false;
           const finished = data.finished || false;
 
-          const maxDp = Math.max(...dp, 1);
+          // 用循环求最大值，避免 Math.max(...dp) 展开大数组导致 RangeError
+          let maxDp = 1;
+          for (const v of dp) if (v > maxDp) maxDp = v;
 
           return (
             <div className="p-4">
@@ -127,7 +133,8 @@ function LISVisualizer() {
                   {nums.map((item: any, idx: number) => {
                     const isI = idx === highlightI;
                     const isJ = idx === highlightJ;
-                    const isInLIS = finished && lis.includes(item.value);
+                    // 用索引级标志（最终步骤中 nums[].inLIS）判断，避免重复值时按值匹配导致高亮错误
+                    const isInLIS = finished && item.inLIS === true;
                     const dpVal = dp[idx] || 1;
                     const height = Math.max((dpVal / maxDp) * 80, 8);
 

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { BarChart3, Play, Zap } from "lucide-react";
 import type { MethodComparison } from "@/types";
 
@@ -42,11 +42,19 @@ export function PerformancePanel({ comparisons, benchmark }: PerformancePanelPro
   const [running, setRunning] = useState(false);
   const [currentSize, setCurrentSize] = useState<number | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
+  // 组件卸载后停止异步基准循环，避免继续 setState/浪费计算
+  const cancelledRef = useRef(false);
+  useEffect(() => {
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, []);
 
   const sizes = benchmark?.sizes ?? [50, 100, 200, 400];
 
   const handleRun = async () => {
     if (!benchmark) return;
+    cancelledRef.current = false;
     setRunning(true);
     setResults(null);
 
@@ -58,28 +66,34 @@ export function PerformancePanel({ comparisons, benchmark }: PerformancePanelPro
 
     // Use setTimeout to allow UI to update
     await new Promise((r) => setTimeout(r, 50));
+    if (cancelledRef.current) return;
 
     for (const size of sizes) {
+      if (cancelledRef.current) break;
       setCurrentSize(size);
       const data = benchmark.generateData(size);
 
       for (let i = 0; i < benchmark.implementations.length; i++) {
+        if (cancelledRef.current) break;
         const impl = benchmark.implementations[i];
         const timeMs = runBenchmark(impl.fn, data);
         allResults[i].times.push({ size, timeMs: Math.round(timeMs * 100) / 100 });
         // Update UI mid-benchmark
-        setResults([...allResults]);
+        if (!cancelledRef.current) setResults([...allResults]);
         await new Promise((r) => setTimeout(r, 10));
       }
     }
 
+    if (cancelledRef.current) return;
     setResults(allResults);
     setCurrentSize(null);
     setRunning(false);
 
     // Scroll to results
     setTimeout(() => {
-      resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      if (!cancelledRef.current) {
+        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     }, 100);
   };
 
@@ -298,15 +312,47 @@ export function createDijkstraBenchmark(): BenchmarkConfig {
           for (let i = 1; i <= nodes; i++) adj.set(i, []);
           for (const [u, v, w] of edges) adj.get(u)!.push([v, w]);
           dist[start] = 0;
-          const pq: [number, number][] = [[0, start]]; // [dist, node]
-          while (pq.length > 0) {
-            pq.sort((a, b) => b[0] - a[0]);
-            const [d, u] = pq.pop()!;
+
+          // 二叉最小堆实现：[dist, node]
+          const heap: [number, number][] = [[0, start]];
+          const heapPush = (item: [number, number]) => {
+            let i = heap.length;
+            heap.push(item);
+            while (i > 0) {
+              const p = (i - 1) >> 1;
+              if (heap[p][0] <= heap[i][0]) break;
+              [heap[p], heap[i]] = [heap[i], heap[p]];
+              i = p;
+            }
+          };
+          const heapPop = (): [number, number] | undefined => {
+            if (heap.length === 0) return undefined;
+            const top = heap[0];
+            const last = heap.pop()!;
+            if (heap.length > 0) {
+              heap[0] = last;
+              let i = 0;
+              const n = heap.length;
+              while (true) {
+                let smallest = i;
+                const l = (i << 1) + 1, r = (i << 1) + 2;
+                if (l < n && heap[l][0] < heap[smallest][0]) smallest = l;
+                if (r < n && heap[r][0] < heap[smallest][0]) smallest = r;
+                if (smallest === i) break;
+                [heap[i], heap[smallest]] = [heap[smallest], heap[i]];
+                i = smallest;
+              }
+            }
+            return top;
+          };
+
+          while (heap.length > 0) {
+            const [d, u] = heapPop()!;
             if (d > dist[u]) continue;
             for (const [v, w] of adj.get(u)!) {
               if (dist[u] + w < dist[v]) {
                 dist[v] = dist[u] + w;
-                pq.push([dist[v], v]);
+                heapPush([dist[v], v]);
               }
             }
           }
@@ -383,7 +429,7 @@ export function createMSTBenchmark(): BenchmarkConfig {
         },
       },
       {
-        name: "Prim O((V+E)logV)",
+        name: "Prim O(V·E)",
         color: "#3b82f6",
         fn: (data: any) => {
           const { nodes, edges } = data;
@@ -452,8 +498,9 @@ export function createTraversalBenchmark(): BenchmarkConfig {
           const q = [start];
           visited[start] = true;
           const order: number[] = [];
-          while (q.length > 0) {
-            const u = q.shift()!;
+          let head = 0;
+          while (head < q.length) {
+            const u = q[head++];
             order.push(u);
             for (const v of adj.get(u)!) if (!visited[v]) { visited[v] = true; q.push(v); }
           }

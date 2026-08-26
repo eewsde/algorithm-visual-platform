@@ -4,6 +4,13 @@ export interface KruskalEdge {
   from: number;
   to: number;
   weight: number;
+  // 输入顺序编号（0-based），用于区分平行边
+  index: number;
+}
+
+// 步骤快照中已选边的形态：在原始边上附加选中标记
+export interface SelectedEdge extends KruskalEdge {
+  isSelected: boolean;
 }
 
 export interface KruskalInput {
@@ -13,19 +20,34 @@ export interface KruskalInput {
 
 export function parseKruskalInput(input: string): KruskalInput {
   const lines = input.trim().split("\n").filter((l) => l.trim());
+  if (lines.length === 0) {
+    throw new Error("请输入图数据");
+  }
   const firstLine = lines[0].trim().split(/\s+/);
   const n = parseInt(firstLine[0]);
   const m = parseInt(firstLine[1]);
+  if (isNaN(n) || isNaN(m)) {
+    throw new Error("n、m 必须为整数");
+  }
+  if (n > 500 || m > 5000) {
+    throw new Error("规模过大：节点数最多 500、边数最多 5000，以保证可视化流畅");
+  }
 
   const edges: KruskalEdge[] = [];
+  let edgeIndex = 0;
   for (let i = 1; i <= m && i < lines.length; i++) {
     const parts = lines[i].trim().split(/\s+/);
     if (parts.length >= 3) {
-      edges.push({
-        from: parseInt(parts[0]),
-        to: parseInt(parts[1]),
-        weight: parseInt(parts[2]),
-      });
+      const from = parseInt(parts[0]);
+      const to = parseInt(parts[1]);
+      const weight = parseInt(parts[2]);
+      if (isNaN(from) || isNaN(to) || isNaN(weight)) {
+        throw new Error("边数据格式错误");
+      }
+      if (from < 1 || from > n || to < 1 || to > n) {
+        throw new Error("边端点编号超出范围");
+      }
+      edges.push({ from, to, weight, index: edgeIndex++ });
     }
   }
   return { nodes: n, edges };
@@ -67,18 +89,19 @@ export function generateKruskalSteps(input: KruskalInput): VisualizationStep[] {
   }
 
   const selectedEdges: KruskalEdge[] = [];
+  // 已检查（尝试过）的边 index 集合：提前 break 后，从未检查的边应标记为 pending 而非 rejected
+  const checkedIndexSet = new Set<number>();
   let totalWeight = 0;
 
   steps.push({
     id: stepId++,
     description: `初始化：将 ${edges.length} 条边按权值从小到大排序。每个节点自成一个集合。`,
     data: {
-      sortedEdges: sortedEdges.map((e, i) => ({
+      sortedEdges: sortedEdges.map((e) => ({
         ...e,
-        index: i,
         status: "pending" as const,
       })),
-      selectedEdges: [] as any[],
+      selectedEdges: [] as SelectedEdge[],
       nodes: Array.from({ length: nodes }, (_, i) => ({
         id: i + 1,
         label: `${i + 1}`,
@@ -90,17 +113,23 @@ export function generateKruskalSteps(input: KruskalInput): VisualizationStep[] {
 
   for (let idx = 0; idx < sortedEdges.length; idx++) {
     const edge = sortedEdges[idx];
+    checkedIndexSet.add(edge.index);
+    // 已选边的 index 集合（避免平行边按 (from,to,weight) 值匹配出错）
+    const selectedIndexSet = new Set(selectedEdges.map((s) => s.index));
 
     steps.push({
       id: stepId++,
       description: `检查边 ${idx + 1}/${sortedEdges.length}：(${edge.from}, ${edge.to}) 权值=${edge.weight}`,
       data: {
-        sortedEdges: sortedEdges.map((e, i) => ({
+        sortedEdges: sortedEdges.map((e) => ({
           ...e,
-          index: i,
-          status: i < idx
-            ? (selectedEdges.some((s) => s.from === e.from && s.to === e.to && s.weight === e.weight) ? "selected" as const : "rejected" as const)
-            : i === idx ? "current" as const : "pending" as const,
+          status: selectedIndexSet.has(e.index)
+            ? "selected" as const
+            : e.index === edge.index
+              ? "current" as const
+              : checkedIndexSet.has(e.index)
+                ? "rejected" as const
+                : "pending" as const,
         })),
         selectedEdges: selectedEdges.map((e) => ({ ...e, isSelected: true })),
         nodes: Array.from({ length: nodes }, (_, i) => ({
@@ -127,16 +156,20 @@ export function generateKruskalSteps(input: KruskalInput): VisualizationStep[] {
       selectedEdges.push(edge);
       totalWeight += edge.weight;
 
+      // 选择后重新计算已选 index 集合（包含刚选入的边）
+      const newSelectedIndexSet = new Set(selectedEdges.map((s) => s.index));
+
       steps.push({
         id: stepId++,
         description: `√ 选择此边！${edge.from} 和 ${edge.to} 不在同一集合（根分别为 ${fromRoot} 和 ${toRoot}），合并两个集合。累计权重 = ${totalWeight}`,
         data: {
-          sortedEdges: sortedEdges.map((e, i) => ({
+          sortedEdges: sortedEdges.map((e) => ({
             ...e,
-            index: i,
-            status: i <= idx
-              ? (selectedEdges.some((s) => s.from === e.from && s.to === e.to && s.weight === e.weight) ? "selected" as const : i === idx ? "selected" as const : "rejected" as const)
-              : "pending" as const,
+            status: newSelectedIndexSet.has(e.index)
+              ? "selected" as const
+              : checkedIndexSet.has(e.index)
+                ? "rejected" as const
+                : "pending" as const,
           })),
           selectedEdges: selectedEdges.map((e) => ({ ...e, isSelected: true })),
           nodes: Array.from({ length: nodes }, (_, i) => ({
@@ -164,12 +197,13 @@ export function generateKruskalSteps(input: KruskalInput): VisualizationStep[] {
         id: stepId++,
         description: `× 跳过此边！${edge.from} 和 ${edge.to} 已在同一集合（根都是 ${fromRoot}），选择此边会形成环。`,
         data: {
-          sortedEdges: sortedEdges.map((e, i) => ({
+          sortedEdges: sortedEdges.map((e) => ({
             ...e,
-            index: i,
-            status: i <= idx
-              ? (selectedEdges.some((s) => s.from === e.from && s.to === e.to && s.weight === e.weight) ? "selected" as const : "rejected" as const)
-              : "pending" as const,
+            status: selectedIndexSet.has(e.index)
+              ? "selected" as const
+              : checkedIndexSet.has(e.index)
+                ? "rejected" as const
+                : "pending" as const,
           })),
           selectedEdges: selectedEdges.map((e) => ({ ...e, isSelected: true })),
           nodes: Array.from({ length: nodes }, (_, i) => ({
@@ -201,9 +235,11 @@ export function generateKruskalSteps(input: KruskalInput): VisualizationStep[] {
     data: {
       sortedEdges: sortedEdges.map((e) => ({
         ...e,
-        index: 0,
-        status: selectedEdges.some((s) => s.from === e.from && s.to === e.to && s.weight === e.weight)
-          ? "selected" as const : "rejected" as const,
+        status: selectedEdges.some((s) => s.index === e.index)
+          ? "selected" as const
+          : checkedIndexSet.has(e.index)
+            ? "rejected" as const
+            : "pending" as const,
       })),
       selectedEdges: selectedEdges.map((e) => ({ ...e, isSelected: true })),
       nodes: Array.from({ length: nodes }, (_, i) => ({

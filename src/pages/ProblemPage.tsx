@@ -1,7 +1,7 @@
 import { Suspense, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, ChevronLeft, ChevronRight, CheckCircle2, Heart, BookOpen, Loader2 } from "lucide-react";
-import { getProblemById, problems } from "@/data";
+import { getProblemById, problems, categoryNames } from "@/data";
 import { Difficulty } from "@/types";
 import { getVisualizer } from "@/problems";
 import SolutionSection from "@/components/SolutionSection";
@@ -64,6 +64,7 @@ function ProblemPage() {
     markAsCompleted,
     markAsInProgress,
     toggleFavorite,
+    removeFromProgress,
   } = useAppStore();
 
   // 使用 Zustand store 管理左侧描述区域的滚动位置
@@ -153,7 +154,7 @@ function ProblemPage() {
           {/* 中间：题目标题 */}
           <div className="flex items-center gap-3">
             <span className="text-gray-500 font-mono text-sm">
-              P{problem.leetcodeNumber}
+              {problem.luoguNumber}
             </span>
             <h2 className="text-lg font-bold text-gray-900">
               {problem.title}
@@ -214,10 +215,14 @@ function ProblemPage() {
                 )}
               </button>
             ) : (
-              <div className="inline-flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg">
+              <button
+                onClick={() => removeFromProgress(currentId)}
+                className="inline-flex items-center gap-1 px-4 py-1.5 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-gray-100 transition"
+                title="点击取消已完成状态"
+              >
                 <CheckCircle2 size={16} />
                 <span>已完成</span>
-              </div>
+              </button>
             )}
             
             <button
@@ -247,7 +252,7 @@ function ProblemPage() {
                         key={cat}
                         className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full"
                       >
-                        {cat}
+                        {categoryNames[cat] || cat}
                       </span>
                     ))}
                   </div>
@@ -267,18 +272,20 @@ function ProblemPage() {
               {problem.examples.map((example, index) => (
                 <div key={index} className="bg-gray-50 rounded-lg p-4 mb-3">
                   <div className="font-mono text-sm">
-                    <div className="mb-2">
-                      <span className="text-gray-600 font-semibold">输入：</span>
-                      <span className="text-gray-900">{example.input}</span>
+                    {/* 输入/输出各自独立成块：标签单独一行，内容另起一行，块之间留空行 */}
+                    <div className="mb-3">
+                      <div className="text-gray-600 font-semibold mb-1">输入：</div>
+                      {/* whitespace-pre-line：保留 \n 换行，避免多行示例被压成一行、数字黏连 */}
+                      <div className="text-gray-900 whitespace-pre-line">{example.input}</div>
                     </div>
-                    <div className="mb-2">
-                      <span className="text-gray-600 font-semibold">输出：</span>
-                      <span className="text-gray-900">{example.output}</span>
+                    <div className="mb-3">
+                      <div className="text-gray-600 font-semibold mb-1">输出：</div>
+                      <div className="text-gray-900 whitespace-pre-line">{example.output}</div>
                     </div>
                     {example.explanation && (
                       <div>
-                        <span className="text-gray-600 font-semibold">解释：</span>
-                        <span className="text-gray-900">{example.explanation}</span>
+                        <div className="text-gray-600 font-semibold mb-1">解释：</div>
+                        <div className="text-gray-900 whitespace-pre-line">{example.explanation}</div>
                       </div>
                     )}
                   </div>
@@ -287,12 +294,24 @@ function ProblemPage() {
             </div>
 
             {/* 约束条件 */}
-            {problem.constraints && (
+            {problem.constraints && problem.constraints.length > 0 && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 className="text-lg font-semibold mb-4 text-gray-900">提示</h3>
+                <h3 className="text-lg font-semibold mb-4 text-gray-900">约束条件</h3>
                 <ul className="list-disc list-inside text-gray-700 space-y-2">
                   {problem.constraints.map((constraint, index) => (
                     <li key={index} className="leading-relaxed">{constraint}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* 提示 */}
+            {problem.hints && problem.hints.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-900">提示</h3>
+                <ul className="list-disc list-inside text-gray-700 space-y-2">
+                  {problem.hints.map((hint, index) => (
+                    <li key={index} className="leading-relaxed">{hint}</li>
                   ))}
                 </ul>
               </div>

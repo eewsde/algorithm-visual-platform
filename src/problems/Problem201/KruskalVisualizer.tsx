@@ -14,6 +14,7 @@ interface EdgeStatus {
   from: number;
   to: number;
   weight: number;
+  index: number;
   status: "pending" | "current" | "selected" | "rejected";
 }
 
@@ -25,7 +26,7 @@ interface NodeInfo {
 
 interface KruskalData {
   sortedEdges?: EdgeStatus[];
-  selectedEdges?: { from: number; to: number; weight: number; isSelected?: boolean }[];
+  selectedEdges?: { from: number; to: number; weight: number; index: number; isSelected?: boolean }[];
   nodes?: NodeInfo[];
   highlightedEdgeIdx?: number;
 }
@@ -59,7 +60,7 @@ function KruskalVisualizer() {
             value: { input: "5 7\n1 2 3\n1 5 1\n2 3 5\n2 5 4\n3 4 2\n3 5 6\n4 5 7" },
           },
         ],
-        keyLines: [2,11,12,22,23,24,25,27],
+        keyLines: [3, 5, 22, 23, 24, 25, 27],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -121,14 +122,13 @@ function KruskalVisualizer() {
             value: n.parent,
           }));
 
-          // Build graph edges from selected + current
+          // Build graph edges：展示全图并按当前步骤的边状态着色
           const graphEdges: GraphEdgeState[] = [];
-          const selectedSet = new Set(
-            selected.map((e) => `${e.from}-${e.to}`)
-          );
+          // 按 index 匹配已选边（避免平行边按 (from,to) 值匹配错选）
+          const selectedSet = new Set(selected.map((e) => e.index));
 
           for (const e of edgeList) {
-            if (e.status === "selected" || selectedSet.has(`${e.from}-${e.to}`)) {
+            if (e.status === "selected" || selectedSet.has(e.index)) {
               graphEdges.push({
                 from: e.from,
                 to: e.to,
@@ -143,6 +143,22 @@ function KruskalVisualizer() {
                 weight: e.weight,
                 label: `${e.weight}`,
                 isCurrent: true,
+              });
+            } else if (e.status === "rejected") {
+              graphEdges.push({
+                from: e.from,
+                to: e.to,
+                weight: e.weight,
+                label: `${e.weight}`,
+                isRejected: true,
+              });
+            } else {
+              // pending / 未检查：浅灰
+              graphEdges.push({
+                from: e.from,
+                to: e.to,
+                weight: e.weight,
+                label: `${e.weight}`,
               });
             }
           }
@@ -171,6 +187,7 @@ function KruskalVisualizer() {
                     if (e.status === "selected") { bgColor = "bg-green-50 border-green-300"; emoji = "✓"; }
                     else if (e.status === "current") { bgColor = "bg-yellow-50 border-yellow-400"; emoji = "→"; }
                     else if (e.status === "rejected") { bgColor = "bg-red-50 border-red-200"; emoji = "✗"; }
+                    else if (e.status === "pending") { bgColor = "bg-gray-50 border-gray-200"; } /* 未检查：灰色 */
                     return (
                       <div key={i} className={`flex items-center gap-3 px-3 py-1.5 border rounded text-sm ${bgColor}`}>
                         <span className="text-gray-400 w-6 text-right">{i + 1}.</span>
@@ -184,7 +201,7 @@ function KruskalVisualizer() {
 
                 {graphEdges.length > 0 && (
                   <div className="mt-6">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">MST 图（已选边）</h3>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">过程图（边状态）</h3>
                     <GraphTemplate
                       nodes={graphNodes}
                       edges={graphEdges}
@@ -204,6 +221,14 @@ function KruskalVisualizer() {
                           <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
                             <div className="w-3 h-0.5 bg-yellow-400" />
                             <span className="text-gray-700">当前检查</span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
+                            <div className="w-3 h-0.5 bg-red-400" />
+                            <span className="text-gray-700">被拒（成环）</span>
+                          </div>
+                          <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
+                            <div className="w-3 h-0.5 bg-gray-300" />
+                            <span className="text-gray-700">未检查</span>
                           </div>
                         </div>
                       )}

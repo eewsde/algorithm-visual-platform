@@ -43,7 +43,13 @@ function PlaybackControls({
           <div className="flex-1 bg-gray-200 rounded-full h-2 min-w-[120px]">
             <div
               className="bg-gradient-to-r from-primary-500 to-blue-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentStep + 1) / totalSteps) * 100}%` }}
+              style={{
+                width: `${
+                  totalSteps > 1
+                    ? (currentStep / (totalSteps - 1)) * 100
+                    : 0
+                }%`,
+              }}
             />
           </div>
         </div>

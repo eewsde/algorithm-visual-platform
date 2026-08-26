@@ -16,14 +16,12 @@ interface FloydData {
   n?: number;
 }
 
-const INF = Infinity;
-
 function FloydVisualizer() {
   return (
     <ConfigurableVisualizer<FloydInput, FloydData>
       config={{
         defaultInput: {
-          input: "3\n0 1 0\n0 0 1\n0 0 0",
+          input: "4\n0 0 0 1\n1 0 0 0\n0 0 0 1\n0 1 0 0",
         },
         algorithm: (input) => {
           return generateFloydSteps(parseFloydInput(input.input));
@@ -33,21 +31,25 @@ function FloydVisualizer() {
           {
             type: "string",
             key: "input",
-            label: "邻接矩阵（第一行 n，接下来 n 行），0 表示无边",
-            placeholder: "3\n0 1 0\n0 0 1\n0 0 0",
+            label: "邻接矩阵（第一行 n，接下来 n 行 n 列的 0/1）",
+            placeholder: "4\n0 0 0 1\n1 0 0 0\n0 0 0 1\n0 1 0 0",
           },
         ],
         testCases: [
           {
-            label: "示例1",
+            label: "示例1（洛谷官方样例）",
+            value: { input: "4\n0 0 0 1\n1 0 0 0\n0 0 0 1\n0 1 0 0" },
+          },
+          {
+            label: "示例2（无环链·对角线为0）",
             value: { input: "3\n0 1 0\n0 0 1\n0 0 0" },
           },
           {
-            label: "示例2",
-            value: { input: "4\n0 3 0 7\n8 0 2 0\n5 0 0 1\n2 0 0 0" },
+            label: "示例3（含环）",
+            value: { input: "4\n0 1 0 0\n0 0 1 0\n0 0 0 1\n0 1 0 0" },
           },
         ],
-        keyLines: [4,5,6,7],
+        keyLines: [4, 5, 6, 7],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -90,13 +92,13 @@ function FloydVisualizer() {
           return (
             <div className="p-4">
               <CoreIdeaBox
-                idea="dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])，三重循环，k 在最外层。DP思想：每次尝试以节点k为中转来缩短i→j的路径。"
+                idea="reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])，三重循环，k 在最外层。若 i 能到 k 且 k 能到 j，则 i 能到 j。"
                 color="indigo"
                 features={[
                   "时间复杂度 O(n³)",
                   "空间复杂度 O(n²)",
-                  "可求全源最短路径",
-                  "可处理负权边（无负环）",
+                  "布尔矩阵运算（OR/AND）",
+                  "对角线仅当节点在环上时才为 1",
                 ]}
               />
 
@@ -144,10 +146,10 @@ function FloydVisualizer() {
                               <td
                                 key={j}
                                 className={`border border-gray-300 px-3 py-2 text-center font-mono text-sm transition-colors duration-300 ${bgColor} ${
-                                  val === INF ? "text-gray-400" : "text-gray-800"
+                                  val === 1 ? "text-green-700 font-bold" : "text-gray-400"
                                 }`}
                               >
-                                {val === INF ? "∞" : val}
+                                {val}
                               </td>
                             );
                           })}

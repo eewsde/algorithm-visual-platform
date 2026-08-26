@@ -1,20 +1,29 @@
 /**
- * Floyd-Warshall 全源最短路径 / 传递闭包
+ * Floyd 传递闭包（洛谷 B3611）
  *
- * 题目：给定 n 个点的有向图（邻接矩阵），求任意两点间的最短路径或可达性。
- * 算法：三重循环 DP，dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j])。
- *       中间节点 k 必须在最外层循环。
+ * 题目：给定一张 n 个点的有向图的邻接矩阵（图中不含自环，a[i][i]=0），求传递闭包。
+ *       传递闭包 B[i][j] = 1 表示 i 可以直接或间接到达 j，否则为 0。
+ * 算法：Floyd-Warshall 布尔版，三重循环，k 在最外层：
+ *       reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])
+ *       注意：对角线不预先置 1——只有存在经过 i 的环时，i 才能间接到达自己。
  *
- * 时间复杂度：O(n³)
- * 空间复杂度：O(n²)
+ * 输入：第一行 n；接下来 n 行，每行 n 个数（0/1）。
+ * 输出：n 行，传递闭包矩阵。
+ *
+ * 官方样例：
+ *   4
+ *   0 0 0 1
+ *   1 0 0 0
+ *   0 0 0 1
+ *   0 1 0 0
+ *   → 输出 4 行均为：1 1 0 1
+ *
+ * 时间复杂度：O(n³)    空间复杂度：O(n²)
  */
 
 #include <iostream>
 #include <vector>
-#include <algorithm>
 using namespace std;
-
-const int INF = 1e9;
 
 int main() {
     ios::sync_with_stdio(false);
@@ -23,22 +32,19 @@ int main() {
     int n;
     cin >> n;
 
-    vector<vector<int>> dist(n, vector<int>(n));
+    vector<vector<int>> reach(n, vector<int>(n));
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            cin >> dist[i][j];
-            if (i != j && dist[i][j] == 0) {
-                dist[i][j] = INF; // 无边记为无穷大
-            }
+            cin >> reach[i][j];
         }
     }
 
-    // Floyd 核心：三层循环
+    // Floyd 布尔版核心：三层循环，中间节点 k 必须在最外层
     for (int k = 0; k < n; k++) {
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++) {
-                if (dist[i][k] != INF && dist[k][j] != INF) {
-                    dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);
+                if (reach[i][k] && reach[k][j]) {
+                    reach[i][j] = 1; // i 可经 k 到达 j
                 }
             }
         }
@@ -46,9 +52,8 @@ int main() {
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
-            cout << (dist[i][j] == INF ? -1 : dist[i][j]) << " \n"[j == n - 1];
+            cout << reach[i][j] << (j == n - 1 ? "\n" : " ");
         }
     }
-
     return 0;
 }

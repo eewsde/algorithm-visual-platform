@@ -1,211 +1,163 @@
 import { VisualizationStep } from "@/types";
 
-export interface TopoEdge {
-  from: number;
-  to: number;
+export interface TaskDef {
+  id: number;
+  len: number;
+  prereqs: number[];
 }
 
-export interface TopoInput {
-  nodes: number;
-  edges: TopoEdge[];
+export interface TaskInput {
+  tasks: TaskDef[];
 }
 
-export function parseTopoInput(input: string): TopoInput {
+/**
+ * 解析杂务输入（P1113 格式）：
+ * 第一行 n；接下来 n 行：序号 耗时 前置1 前置2 ... 0（0 结束前置列表）
+ */
+export function parseTopoInput(input: string): TaskInput {
   const lines = input.trim().split("\n").filter((l) => l.trim());
-  const firstLine = lines[0].trim().split(/\s+/);
-  const n = parseInt(firstLine[0]);
-  const m = parseInt(firstLine[1]);
-
-  const edges: TopoEdge[] = [];
-  for (let i = 1; i <= m && i < lines.length; i++) {
-    const parts = lines[i].trim().split(/\s+/);
-    if (parts.length >= 2) {
-      edges.push({ from: parseInt(parts[0]), to: parseInt(parts[1]) });
-    }
+  if (lines.length === 0) {
+    throw new Error("请输入杂务数据");
   }
-  return { nodes: n, edges };
+  const n = parseInt(lines[0].trim());
+  if (!Number.isFinite(n) || n < 1) {
+    throw new Error("杂务数格式错误");
+  }
+  if (n > 200) {
+    throw new Error("杂务数最多 200，否则步骤过多会卡顿");
+  }
+  if (lines.length < n + 1) {
+    throw new Error("杂务行数不足");
+  }
+
+  const tasks: TaskDef[] = [];
+  for (let i = 1; i <= n; i++) {
+    const parts = lines[i].trim().split(/\s+/).map(Number);
+    if (parts.length < 2 || !Number.isFinite(parts[0]) || !Number.isFinite(parts[1])) {
+      throw new Error(`第 ${i} 行杂务数据格式错误`);
+    }
+    const id = parts[0];
+    const len = parts[1];
+    if (id !== i) {
+      throw new Error("杂务序号必须按 1..n 有序递增");
+    }
+    const prereqs: number[] = [];
+    for (let j = 2; j < parts.length; j++) {
+      const p = parts[j];
+      if (p === 0) break;
+      if (!Number.isFinite(p) || p < 1 || p >= id) {
+        throw new Error(`杂务 ${id} 的前置编号必须在 1..${id - 1} 内`);
+      }
+      prereqs.push(p);
+    }
+    tasks.push({ id, len, prereqs });
+  }
+  return { tasks };
 }
 
-export function generateTopoSteps(input: TopoInput): VisualizationStep[] {
-  const { nodes, edges } = input;
+/**
+ * 生成杂务（拓扑序 DP / 关键路径）的可视化步骤：
+ * 杂务 k 的前置只在 1..k-1 中 → 按编号顺序天然是拓扑序。
+ * f[k] = len[k] + max(f[前置])，答案 = max(f[i])。
+ */
+export function generateTopoSteps(input: TaskInput): VisualizationStep[] {
+  const { tasks } = input;
+  const n = tasks.length;
   const steps: VisualizationStep[] = [];
   let stepId = 0;
 
-  const adj: Map<number, number[]> = new Map();
-  const inDegree = new Array(nodes + 1).fill(0);
-  for (let i = 1; i <= nodes; i++) adj.set(i, []);
-  for (const e of edges) {
-    adj.get(e.from)!.push(e.to);
-    inDegree[e.to]++;
-  }
+  // f[i]：杂务 i 的最早完成时间
+  const finish: number[] = new Array(n + 1).fill(0);
+  let answer = 0;
 
-  const queue: number[] = [];
-  let head = 0; // O(1) 出队指针，避免 shift() 的 O(n) 开销
-  const result: number[] = [];
-
-  steps.push({
-    id: stepId++,
-    description: `初始化：计算每个节点的入度。入度为0的节点可以直接开始。`,
-    data: {
-      nodes: Array.from({ length: nodes }, (_, i) => ({
-        id: i + 1,
-        label: `${i + 1}`,
-        inDegree: inDegree[i + 1],
-        state: "unvisited" as const,
-      })),
-      edges: edges.map((e) => ({ ...e, type: "normal" as const })),
-      queue: [] as number[],
-      result: [] as number[],
-    },
-    variables: { totalNodes: nodes, inQueue: 0, processed: 0 },
-  });
-
-  for (let i = 1; i <= nodes; i++) {
-    if (inDegree[i] === 0) {
-      queue.push(i);
+  // 依赖边：前置 → 杂务（有向）
+  const edges: { from: number; to: number }[] = [];
+  for (const t of tasks) {
+    for (const p of t.prereqs) {
+      edges.push({ from: p, to: t.id });
     }
   }
 
-  steps.push({
-    id: stepId++,
-    description: `将入度为0的节点加入队列：[${queue.join(", ")}]。这些节点没有前置依赖。`,
-    data: {
-      nodes: Array.from({ length: nodes }, (_, i) => ({
-        id: i + 1,
-        label: `${i + 1}`,
-        inDegree: inDegree[i + 1],
-        state: queue.includes(i + 1) ? ("in_queue" as const) : ("unvisited" as const),
-      })),
-      edges: edges.map((e) => ({ ...e, type: "normal" as const })),
-      queue: queue.slice(head),
-      result: [],
-    },
-    variables: { inQueue: queue.length, processed: 0 },
+  const snapshot = (
+    current: number,
+    prereqIds: number[],
+    currentEdges: { from: number; to: number }[]
+  ) => ({
+    nodes: tasks.map((t) => ({
+      id: t.id,
+      label: `${t.id}`,
+      len: t.len,
+      finish: finish[t.id],
+      state: (
+        t.id === current
+          ? "current"
+          : prereqIds.includes(t.id)
+            ? "prereq"
+            : finish[t.id] > 0
+              ? "visited"
+              : "unvisited"
+      ) as "current" | "prereq" | "visited" | "unvisited",
+    })),
+    edges: edges.map((e) => ({
+      ...e,
+      isCurrent: currentEdges.some((ce) => ce.from === e.from && ce.to === e.to),
+    })),
+    answer,
   });
 
-  while (head < queue.length) {
-    const u = queue[head++];
-    result.push(u);
+  steps.push({
+    id: stepId++,
+    description: `初始化：共 ${n} 个杂务。杂务 k 的前置只可能在 1..k-1 中，按编号顺序天然是拓扑序。f[k] = 耗时 + 前置最大完成时间。`,
+    data: snapshot(-1, [], []),
+    variables: { totalNodes: n, answer: 0 },
+  });
+
+  for (const t of tasks) {
+    if (t.prereqs.length > 0) {
+      steps.push({
+        id: stepId++,
+        description: `检查杂务 ${t.id} 的前置杂务：[${t.prereqs.join(", ")}]。`,
+        data: snapshot(t.id, t.prereqs, []),
+        variables: {
+          totalNodes: n,
+          currentTask: t.id,
+          prereqList: t.prereqs.join(", "),
+          taskLen: t.len,
+          answer,
+        },
+      });
+    }
+
+    // 计算最早完成时间
+    let maxPre = 0;
+    for (const p of t.prereqs) {
+      maxPre = Math.max(maxPre, finish[p]);
+    }
+    finish[t.id] = t.len + maxPre;
+    const isNewMax = finish[t.id] > answer;
+    answer = Math.max(answer, finish[t.id]);
+    const incoming = t.prereqs.map((p) => ({ from: p, to: t.id }));
 
     steps.push({
       id: stepId++,
-      description: `取出节点 ${u}（入度=0），加入拓扑序列。当前序列：[${result.join(", ")}]`,
-      data: {
-        nodes: Array.from({ length: nodes }, (_, i) => ({
-          id: i + 1,
-          label: `${i + 1}`,
-          inDegree: inDegree[i + 1],
-          state:
-            i + 1 === u
-              ? ("current" as const)
-              : result.includes(i + 1)
-                ? ("visited" as const)
-                : queue.includes(i + 1)
-                  ? ("in_queue" as const)
-                  : ("unvisited" as const),
-        })),
-        edges: edges.map((e) => ({
-          ...e,
-          type: e.from === u ? ("current" as const) : ("normal" as const),
-        })),
-        queue: queue.slice(head),
-        result: [...result],
-      },
+      description: `计算杂务 ${t.id}：最早完成时间 = 耗时 ${t.len} + 前置最早完成 ${maxPre} = ${finish[t.id]}${isNewMax ? "，成为当前全局最早完成时间" : ""}。`,
+      data: snapshot(t.id, [], incoming),
       variables: {
-        currentNode: u,
-        inQueue: queue.length,
-        processed: result.length,
-        sequence: result.join(", "),
+        totalNodes: n,
+        currentTask: t.id,
+        taskLen: t.len,
+        maxPre,
+        finishTime: finish[t.id],
+        answer,
       },
     });
-
-    for (const v of adj.get(u)!) {
-      inDegree[v]--;
-
-      steps.push({
-        id: stepId++,
-        description: `移除从 ${u} 到 ${v} 的边，节点 ${v} 的入度从 ${inDegree[v] + 1} 变为 ${inDegree[v]}。`,
-        data: {
-          nodes: Array.from({ length: nodes }, (_, i) => ({
-            id: i + 1,
-            label: `${i + 1}`,
-            inDegree: inDegree[i + 1],
-            state: result.includes(i + 1)
-              ? ("visited" as const)
-              : queue.includes(i + 1)
-                ? ("in_queue" as const)
-                : ("unvisited" as const),
-          })),
-          edges: edges.map((e) => ({
-            ...e,
-            type:
-              e.from === u && e.to === v ? ("current" as const) : ("normal" as const),
-          })),
-          queue: queue.slice(head),
-          result: [...result],
-        },
-        variables: {
-          currentNode: u,
-          targetNode: v,
-          newInDegree: inDegree[v],
-          processed: result.length,
-        },
-      });
-
-      if (inDegree[v] === 0) {
-        queue.push(v);
-        steps.push({
-          id: stepId++,
-          description: `节点 ${v} 入度变为0，加入队列。`,
-          data: {
-            nodes: Array.from({ length: nodes }, (_, i) => ({
-              id: i + 1,
-              label: `${i + 1}`,
-              inDegree: inDegree[i + 1],
-              state: result.includes(i + 1)
-                ? ("visited" as const)
-                : queue.includes(i + 1)
-                  ? ("in_queue" as const)
-                  : ("unvisited" as const),
-            })),
-            edges: edges.map((e) => ({ ...e, type: "normal" as const })),
-            queue: queue.slice(head),
-            result: [...result],
-          },
-          variables: {
-            enqueuedNode: v,
-            inQueue: queue.length,
-            processed: result.length,
-          },
-        });
-      }
-    }
   }
-
-  const hasCycle = result.length < nodes;
 
   steps.push({
     id: stepId++,
-    description: hasCycle
-      ? `图中存在环！只处理了 ${result.length}/${nodes} 个节点。存在环的图无法进行拓扑排序。`
-      : `拓扑排序完成！序列：${result.join(" → ")}。所有节点按依赖关系正确排列。`,
-    data: {
-      nodes: Array.from({ length: nodes }, (_, i) => ({
-        id: i + 1,
-        label: `${i + 1}`,
-        inDegree: inDegree[i + 1],
-        state: result.includes(i + 1) ? ("visited" as const) : ("unvisited" as const),
-      })),
-      edges: edges.map((e) => ({ ...e, type: "normal" as const })),
-      queue: [],
-      result: [...result],
-    },
-    variables: {
-      processed: result.length,
-      totalNodes: nodes,
-      hasCycle,
-      sequence: result.join(", "),
-    },
+    description: `全部杂务完成！完成所有杂务所需的最短时间为 ${answer}。`,
+    data: snapshot(-1, [], []),
+    variables: { totalNodes: n, answer, finished: true },
   });
 
   return steps;

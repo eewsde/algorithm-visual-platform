@@ -1,23 +1,17 @@
 {
-  "name": "leetcode-view",
+  "name": "luogu-algo-vis",
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "LeetCode热题100算法可视化教程",
+  "description": "洛谷官方题单 · 图论与动态规划算法可视化教程",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && tsc -p tsconfig.node.json && vite build",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
   },
   "dependencies": {
-    "@react-three/drei": "^9.106.0",
-    "@react-three/fiber": "^8.9.1",
-    "@types/d3": "^7.4.3",
-    "@types/dagre": "^0.7.53",
     "antd": "^6.0.0",
-    "cytoscape": "^3.33.1",
-    "d3": "^7.9.0",
     "dagre": "^0.8.5",
     "framer-motion": "^12.23.24",
     "gsap": "^3.13.0",
@@ -28,12 +22,10 @@
     "react-katex": "^3.1.0",
     "react-router-dom": "^6.20.0",
     "react-syntax-highlighter": "^15.6.6",
-    "three": "^0.181.2",
-    "vis-data": "^8.0.3",
-    "vis-network": "^10.0.2",
     "zustand": "^4.4.0"
   },
   "devDependencies": {
+    "@types/dagre": "^0.7.53",
     "@eslint/js": "^9.0.0",
     "@types/node": "^24.10.1",
     "@types/react": "^18.2.0",

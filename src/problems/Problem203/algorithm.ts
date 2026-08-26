@@ -2,14 +2,30 @@ import { VisualizationStep } from "@/types";
 
 export function parseKnapsackInput(input: string): { capacity: number; items: [number, number][] } {
   const lines = input.trim().split("\n").filter((l) => l.trim());
+  if (lines.length === 0) {
+    throw new Error("请输入背包容量和物品数据");
+  }
   const firstLine = lines[0].trim().split(/\s+/);
-  const capacity = parseInt(firstLine[0]);
+  // 容量必须为整数且 1 ≤ capacity ≤ 1000
+  const capacity = Number(firstLine[0]);
+  if (!Number.isInteger(capacity) || capacity < 1 || capacity > 1000) {
+    throw new Error("容量必须是 1~1000 的整数");
+  }
   const m = parseInt(firstLine[1]);
+  if (m > 50) {
+    throw new Error("物品数最多 50");
+  }
   const items: [number, number][] = [];
   for (let i = 1; i <= m && i < lines.length; i++) {
     const parts = lines[i].trim().split(/\s+/);
     if (parts.length >= 2) {
-      items.push([parseInt(parts[0]), parseInt(parts[1])]);
+      // 每个物品的重量/价值必须是有限数且 ≥ 0（NaN/负数直接报错）
+      const weight = Number(parts[0]);
+      const value = Number(parts[1]);
+      if (!Number.isFinite(weight) || !Number.isFinite(value) || weight < 0 || value < 0) {
+        throw new Error(`物品${i}的重量和价值必须是非负数字`);
+      }
+      items.push([weight, value]);
     }
   }
   return { capacity, items };

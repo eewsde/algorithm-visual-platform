@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { useVisualization } from "@/hooks/useVisualization";
 import { VisualizationLayout } from "./VisualizationLayout";
 import { StepVariables, ProblemInput } from "@/types/visualization";
@@ -24,6 +24,9 @@ export interface VisualizerConfig<TInput extends ProblemInput = ProblemInput, TD
 
   // 代码高亮行号（用于自动轮转高亮）
   keyLines?: number[];
+
+  // 步骤重新生成依赖（如 BFS/DFS 模式切换），变化时重跑算法但保留输入
+  regenKey?: unknown;
 
   // 渲染函数（核心：完全自定义的视觉呈现）
   render: (props: VisualizerRenderProps<TData>) => ReactNode;
@@ -62,7 +65,8 @@ export function ConfigurableVisualizer<TInput extends ProblemInput = ProblemInpu
 }) {
   const visualization = useVisualization<TInput>(
     config.algorithm,
-    config.defaultInput
+    config.defaultInput,
+    { regenKey: config.regenKey }
   );
 
   const setHighlightLines = useCodeStore((s) => s.setHighlightLines);
@@ -73,17 +77,27 @@ export function ConfigurableVisualizer<TInput extends ProblemInput = ProblemInpu
   const currentStep = visualization.currentStep;
   const totalSteps = visualization.steps.length;
 
+  // keyLines 内容签名（字符串，跨渲染稳定，避免因数组引用变化导致 effect 反复执行）
+  const keyLinesSignature = config.keyLines?.join(",") ?? "";
+  const keyLinesRef = useRef<number[]>([]);
+  useEffect(() => {
+    keyLinesRef.current = config.keyLines ?? [];
+  }, [config.keyLines]);
+
   // 同步代码高亮行到全局 store
   useEffect(() => {
     if (currentData.highlightLines) {
       setHighlightLines(currentData.highlightLines);
-    } else if (config.keyLines && config.keyLines.length > 0 && totalSteps > 0) {
-      // 无 per-step 数据时，用轮转方式自动高亮 keyLines
-      const idx = Math.floor((currentStep / Math.max(1, totalSteps)) * config.keyLines.length);
-      const lines = config.keyLines.slice(0, Math.max(1, Math.min(idx + 1, config.keyLines.length)));
-      setHighlightLines(lines);
+    } else {
+      const keyLines = keyLinesRef.current;
+      if (keyLines.length > 0 && totalSteps > 0) {
+        // 无 per-step 数据时，用轮转方式自动高亮 keyLines
+        const idx = Math.floor((currentStep / Math.max(1, totalSteps)) * keyLines.length);
+        const lines = keyLines.slice(0, Math.max(1, Math.min(idx + 1, keyLines.length)));
+        setHighlightLines(lines);
+      }
     }
-  }, [currentData.highlightLines, setHighlightLines, totalSteps, currentStep, config.keyLines]);
+  }, [currentData.highlightLines, setHighlightLines, totalSteps, currentStep, keyLinesSignature]);
 
   useEffect(() => {
     return () => setHighlightLines([]);
@@ -92,7 +106,7 @@ export function ConfigurableVisualizer<TInput extends ProblemInput = ProblemInpu
   // 辅助函数
   const getVariable = <T = any>(name: string, defaultValue?: T): T | undefined => {
     const value = variables?.[name];
-    return value !== undefined ? (value as T) : defaultValue;
+    return value != null ? (value as T) : defaultValue;
   };
 
   const getBooleanVariableFn = (name: string): boolean => {
@@ -127,6 +141,7 @@ export function ConfigurableVisualizer<TInput extends ProblemInput = ProblemInpu
       inputFields={config.inputFields}
       testCases={config.testCases}
       customStepVariables={config.customStepVariables}
+      error={visualization.error}
     >
       {config.render(renderProps)}
     </VisualizationLayout>

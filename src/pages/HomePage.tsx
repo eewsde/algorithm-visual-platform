@@ -80,25 +80,6 @@ function HomePage() {
               </div>
             </div>
           </Link>
-
-          {/* Features */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-8">
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
-              <div className="text-3xl mb-3">🔍</div>
-              <h3 className="font-bold text-gray-900 mb-2">分步执行</h3>
-              <p className="text-sm text-gray-600">逐步查看每一步状态变化，理解算法执行过程</p>
-            </div>
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
-              <div className="text-3xl mb-3">🎮</div>
-              <h3 className="font-bold text-gray-900 mb-2">交互控制</h3>
-              <p className="text-sm text-gray-600">播放/暂停/单步执行/调速，完整控制面板</p>
-            </div>
-            <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center shadow-sm">
-              <div className="text-3xl mb-3">🎯</div>
-              <h3 className="font-bold text-gray-900 mb-2">自定义输入</h3>
-              <p className="text-sm text-gray-600">支持自行输入测试用例，验证不同场景</p>
-            </div>
-          </div>
         </section>
       </div>
     </div>

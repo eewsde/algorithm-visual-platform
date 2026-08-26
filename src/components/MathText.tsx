@@ -14,7 +14,15 @@ export function MathText({ text }: { text: string }) {
     <>
       {parts.map((part, i) => {
         if (part.startsWith("$") && part.endsWith("$") && part.length > 2) {
-          return <InlineMath key={i} math={part.slice(1, -1)} />;
+          const math = part.slice(1, -1);
+          return (
+            <InlineMath
+              key={i}
+              math={math}
+              // KaTeX 解析失败时回退为纯文本，避免整页崩溃
+              renderError={() => <span>{math}</span>}
+            />
+          );
         }
         return <span key={i}>{part}</span>;
       })}

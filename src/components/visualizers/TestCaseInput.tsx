@@ -97,12 +97,14 @@ export function TestCaseInput<T extends ProblemInput>({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   {field.label}:
                 </label>
-                <input
-                  type="text"
+                {/* 用 textarea 而非 input：多行输入（首行 n + 数组 / 图数据）保留换行，避免数字黏连；
+                    rows 按内容行数自适应（1~8 行），单行输入不留空白行 */}
+                <textarea
                   value={inputStrings[field.key] || ''}
                   onChange={(e) => onInputChange(field.key, e.target.value)}
                   placeholder={field.placeholder || `请输入字符串`}
-                  className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono bg-white text-gray-800 font-semibold"
+                  rows={Math.min(Math.max((inputStrings[field.key] || '').split('\n').length, 1), 8)}
+                  className="w-full px-4 py-3 border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono bg-white text-gray-800 font-semibold resize-y"
                 />
               </div>
             );

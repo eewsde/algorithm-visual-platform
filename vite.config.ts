@@ -4,10 +4,10 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  // 如果部署到 GitHub Pages 且仓库名不是 username.github.io，需要设置 base
-  // 例如：base: '/leetcode-view/'
-  // 可以通过环境变量 VITE_BASE_PATH 设置，或在 GitHub Actions 中自动设置
-  base: process.env.VITE_BASE_PATH || "/algorithm-visual-platform/",
+  // 默认按根路径部署（"/"），适合 Vercel / 自有服务器 / 自定义域名
+  // GitHub Pages 子路径部署时，由 CI 通过环境变量 VITE_BASE_PATH 注入，例如：
+  // VITE_BASE_PATH=/repo-name/ pnpm build
+  base: process.env.VITE_BASE_PATH || "/",
   plugins: [react()],
   resolve: {
     alias: {
@@ -30,14 +30,6 @@ export default defineConfig({
 
           // 动画库
           "vendor-animation": ["framer-motion", "gsap"],
-
-          // 图形可视化库（预留，未来使用）
-          "vendor-visualization": [
-            "d3",
-            "cytoscape",
-            "vis-network",
-            "vis-data",
-          ],
 
           // 图标库（轻量）
           "vendor-icons": ["lucide-react"],

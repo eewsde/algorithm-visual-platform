@@ -26,12 +26,24 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           version: 9
-          run_install: true
+          run_install: false
 
-      # 4. Lint
+      # 4. 缓存 pnpm store
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: ${{ runner.os }}-pnpm-
+
+      # 5. 安装依赖
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 6. Lint
       - name: Lint
         run: pnpm lint
 
-      # 5. Build
+      # 7. Build
       - name: Build
         run: pnpm build

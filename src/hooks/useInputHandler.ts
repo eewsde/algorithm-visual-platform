@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import {
   ProblemInput,
   getArrayValue,
@@ -94,6 +94,14 @@ export function useInputHandler<T extends ProblemInput>(
 ): InputHandlerReturn<T> {
   const { inputs, initialValue, onInputChange } = config;
 
+  // 最新解析后的输入值（作为增量更新的基准，并用于返回 currentValue）
+  const latestValueRef = useRef(initialValue);
+  const onInputChangeRef = useRef(onInputChange);
+  useEffect(() => { onInputChangeRef.current = onInputChange; }, [onInputChange]);
+
+  // 当前输入值（随每次输入/用例选择更新）
+  const [currentValue, setCurrentValue] = useState<T>(initialValue);
+
   // 初始化输入字符串值
   const getInitialStrings = useCallback(() => {
     const strings: Record<string, string> = {};
@@ -161,14 +169,21 @@ export function useInputHandler<T extends ProblemInput>(
 
       if (!inputConfig) return;
 
+      // 提交一次输入更新：更新基准值、通知外部并同步 currentValue
+      const commit = (next: T) => {
+        latestValueRef.current = next;
+        onInputChangeRef.current(next);
+        setCurrentValue(next);
+      };
+
       // 根据类型更新值
-      const newValue = { ...initialValue } as T;
+      const newValue = { ...latestValueRef.current } as T;
 
       if (inputConfig.type === "array") {
         const nums = parseArray(value);
-        if (nums.length > 0 && inputConfig.key in newValue) {
+        if (inputConfig.key in newValue) {
           (newValue[inputConfig.key] as unknown) = nums;
-          onInputChange(newValue);
+          commit(newValue);
         }
       } else if (inputConfig.type === "number") {
         const num = parseInt(value);
@@ -181,18 +196,18 @@ export function useInputHandler<T extends ProblemInput>(
             inputConfig.key in newValue
           ) {
             (newValue[inputConfig.key] as unknown) = num;
-            onInputChange(newValue);
+            commit(newValue);
           }
         }
       } else if (inputConfig.type === "string") {
         if (inputConfig.key in newValue) {
           (newValue[inputConfig.key] as unknown) = value;
-          onInputChange(newValue);
+          commit(newValue);
         }
       } else if (inputConfig.type === "boolean") {
         if (inputConfig.key in newValue) {
           (newValue[inputConfig.key] as unknown) = value === "true";
-          onInputChange(newValue);
+          commit(newValue);
         }
       } else if (
         inputConfig.type === "array-and-number" ||
@@ -200,20 +215,20 @@ export function useInputHandler<T extends ProblemInput>(
       ) {
         if (key === inputConfig.arrayKey) {
           const nums = parseArray(value);
-          if (nums.length > 0 && inputConfig.arrayKey in newValue) {
+          if (inputConfig.arrayKey in newValue) {
             (newValue[inputConfig.arrayKey] as unknown) = nums;
-            onInputChange(newValue);
+            commit(newValue);
           }
         } else if (key === inputConfig.numberKey) {
           const num = parseInt(value);
           if (!isNaN(num) && inputConfig.numberKey in newValue) {
             (newValue[inputConfig.numberKey] as unknown) = num;
-            onInputChange(newValue);
+            commit(newValue);
           }
         }
       }
     },
-    [inputs, initialValue, onInputChange, parseArray]
+    [inputs, parseArray]
   );
 
   // 处理测试用例选择
@@ -245,6 +260,8 @@ export function useInputHandler<T extends ProblemInput>(
         }
       });
       setInputStrings(strings);
+      latestValueRef.current = value;
+      setCurrentValue(value);
       onInputChange(value);
     },
     [inputs, onInputChange]
@@ -254,6 +271,6 @@ export function useInputHandler<T extends ProblemInput>(
     inputStrings,
     handleInputChange,
     handleTestCaseSelect,
-    currentValue: initialValue,
+    currentValue,
   };
 }

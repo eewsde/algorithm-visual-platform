@@ -1,48 +1,49 @@
 """
-最长公共子序列 (LCS)
+最长公共子序列（洛谷 P1439）—— 排列转 LIS
 
-给定两个字符串 text1 和 text2，求它们的最长公共子序列的长度。
+题目：给出 1..n 的两个排列 P1、P2，求它们的最长公共子序列的长度（n ≤ 10^5）。
+算法：两个序列都是排列 → 记录 P1 中每个数的位置 pos[x]；
+      把 P2 的每个数换成它在 P1 中的位置，则 LCS 转化为最长上升子序列（LIS），
+      用贪心 + 二分 O(n log n) 求解。
 
-二维 DP。dp[i][j] = text1 前 i 个字符与 text2 前 j 个字符的 LCS 长度。
-    text1[i-1] == text2[j-1] → dp[i][j] = dp[i-1][j-1] + 1
-    text1[i-1] != text2[j-1] → dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+输入：第一行 n；接下来两行，每行 n 个数（1..n 的排列）。
+输出：一个整数，LCS 长度。
 
-时间复杂度：O(m × n)
-空间复杂度：O(m × n)，可优化到 O(min(m, n))
+官方样例：
+  5
+  3 2 1 4 5
+  1 2 3 4 5
+  → 3
+
+时间复杂度：O(n log n)    空间复杂度：O(n)
 """
 
 import sys
+from bisect import bisect_left
 
 def main():
     input = sys.stdin.readline
-    text1 = input().strip()
-    text2 = input().strip()
+    n = int(input())
 
-    m, n = len(text1), len(text2)
-    dp = [[0] * (n + 1) for _ in range(m + 1)]
+    p1 = list(map(int, input().split()))
+    p2 = list(map(int, input().split()))
 
-    for i in range(1, m + 1):
-        for j in range(1, n + 1):
-            if text1[i - 1] == text2[j - 1]:
-                dp[i][j] = dp[i - 1][j - 1] + 1
-            else:
-                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1])
+    # 记录 P1 中每个数的位置（1 基）
+    pos = [0] * (n + 1)
+    for i, x in enumerate(p1, start=1):
+        pos[x] = i
 
-    # 回溯 LCS 序列
-    lcs = []
-    i, j = m, n
-    while i > 0 and j > 0:
-        if text1[i - 1] == text2[j - 1]:
-            lcs.append(text1[i - 1])
-            i -= 1
-            j -= 1
-        elif dp[i - 1][j] > dp[i][j - 1]:
-            i -= 1
+    # 把 P2 的每个数换成 pos[x]，求其 LIS 长度（贪心 + 二分）
+    tails = []  # tails[i] = 长度为 i+1 的 LIS 的最小结尾值
+    for x in p2:
+        idx = pos[x]  # 转成在 P1 中的位置
+        it = bisect_left(tails, idx)
+        if it == len(tails):
+            tails.append(idx)
         else:
-            j -= 1
+            tails[it] = idx
 
-    print(dp[m][n])
-    print(''.join(reversed(lcs)))
+    print(len(tails))
 
 if __name__ == '__main__':
     main()

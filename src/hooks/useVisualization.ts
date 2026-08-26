@@ -27,6 +27,11 @@ export interface VisualizationConfig {
   autoPlay?: boolean;
   /** 播放结束后是否自动重置（默认 false） */
   autoReset?: boolean;
+  /**
+   * 重新生成步骤的额外依赖（如 BFS/DFS 模式切换）。
+   * 变化时会重新执行 generateSteps，但保留当前 input 不重置。
+   */
+  regenKey?: unknown;
 }
 
 export interface VisualizationControls<TInput = unknown> {
@@ -58,6 +63,8 @@ export interface VisualizationControls<TInput = unknown> {
   jumpToStep: (step: number) => void;
   /** 当前步骤的数据 */
   currentStepData: VisualizationStep | null;
+  /** 步骤生成错误信息（算法抛出异常时捕获，供 UI 展示） */
+  error: string | null;
 }
 
 export function useVisualization<TInput = unknown>(
@@ -65,7 +72,7 @@ export function useVisualization<TInput = unknown>(
   initialInput: TInput,
   config: VisualizationConfig = {}
 ): VisualizationControls<TInput> {
-  const { initialSpeed = 1, autoPlay = false, autoReset = false } = config;
+  const { initialSpeed = 1, autoPlay = false, autoReset = false, regenKey } = config;
 
   // 状态管理
   const [input, setInput] = useState<TInput>(initialInput);
@@ -73,25 +80,36 @@ export function useVisualization<TInput = unknown>(
   const [currentStep, setCurrentStep] = useState(0);
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [speed, setSpeed] = useState(initialSpeed);
+  const [error, setError] = useState<string | null>(null);
 
   const generateStepsRef = useRef(generateSteps);
+  const autoResetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     generateStepsRef.current = generateSteps;
   }, [generateSteps]);
 
-  // 当输入改变时，重新生成步骤
+  // 当输入改变（或 regenKey 变化）时，重新生成步骤
   useEffect(() => {
     try {
       const generatedSteps = generateStepsRef.current(input);
       setSteps(generatedSteps);
       setCurrentStep(0);
       setIsPlaying(false);
-    } catch (error) {
-      console.error("生成可视化步骤时出错:", error);
+      setError(null);
+    } catch (err) {
+      console.error("生成可视化步骤时出错:", err);
       setSteps([]);
+      setError(err instanceof Error ? err.message : String(err));
     }
-  }, [input]);
+  }, [input, regenKey]);
+
+  // 清理 autoReset 定时器
+  useEffect(() => {
+    return () => {
+      if (autoResetTimerRef.current) clearTimeout(autoResetTimerRef.current);
+    };
+  }, []);
 
   // 自动播放逻辑
   useEffect(() => {
@@ -101,7 +119,8 @@ export function useVisualization<TInput = unknown>(
     if (currentStep >= steps.length - 1) {
       setIsPlaying(false);
       if (autoReset) {
-        setTimeout(() => setCurrentStep(0), 500);
+        if (autoResetTimerRef.current) clearTimeout(autoResetTimerRef.current);
+        autoResetTimerRef.current = setTimeout(() => setCurrentStep(0), 500);
       }
       return;
     }
@@ -174,5 +193,6 @@ export function useVisualization<TInput = unknown>(
     handleReset,
     jumpToStep,
     currentStepData,
+    error,
   };
 }

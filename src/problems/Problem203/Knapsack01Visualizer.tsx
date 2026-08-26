@@ -104,7 +104,9 @@ function Knapsack01Visualizer() {
           const itemIndex = data.itemIndex ?? -1;
           const currentCap = data.currentCapacity ?? -1;
 
-          const maxVal = Math.max(...dp, 1);
+          // 用循环求最大值，避免 Math.max(...dp) 展开大数组导致 RangeError
+          let maxVal = 1;
+          for (const v of dp) if (v > maxVal) maxVal = v;
 
           return (
             <div className="p-4">
@@ -166,7 +168,7 @@ function Knapsack01Visualizer() {
                             className={`w-full rounded-t transition-all duration-300 ${
                               j === currentCap
                                 ? "bg-green-500"
-                                : itemIndex >= 0 && j >= (items[itemIndex]?.weight || 0)
+                                : itemIndex < items.length && j >= (items[itemIndex]?.weight ?? 0)
                                 ? "bg-blue-400"
                                 : "bg-gray-300"
                             }`}

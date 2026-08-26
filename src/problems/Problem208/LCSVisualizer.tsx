@@ -13,39 +13,35 @@ function LCSVisualizer() {
     <ConfigurableVisualizer<LCSInputData, any>
       config={{
         defaultInput: {
-          input: "abcde\nace",
+          input: "5\n3 2 1 4 5\n1 2 3 4 5",
         },
         algorithm: (input) => {
           return generateLCSSteps(parseLCSInput(input.input));
         },
-        inputTypes: [{ type: "string", key: "input", label: "两个字符串" }],
+        inputTypes: [{ type: "string", key: "input", label: "两个排列" }],
         inputFields: [
           {
             type: "string",
             key: "input",
-            label: "两个字符串（空格分隔或分两行）",
-            placeholder: "abcde ace",
+            label: "第一行 n，接下来两行各 n 个数（1..n 的排列）",
+            placeholder: "5\n3 2 1 4 5\n1 2 3 4 5",
           },
         ],
         testCases: [
           {
-            label: "示例1",
-            value: { input: "abcde\nace" },
+            label: "示例1（洛谷官方样例）",
+            value: { input: "5\n3 2 1 4 5\n1 2 3 4 5" },
           },
           {
-            label: "示例2",
-            value: { input: "abc\nabc" },
+            label: "示例2（完全相同）",
+            value: { input: "4\n1 2 3 4\n1 2 3 4" },
           },
           {
-            label: "示例2b（不匹配）",
-            value: { input: "abc\ndef" },
-          },
-          {
-            label: "示例3（长串）",
-            value: { input: "AGGTAB\nGXTXAYB" },
+            label: "示例3（逆序）",
+            value: { input: "4\n1 2 3 4\n4 3 2 1" },
           },
         ],
-        keyLines: [5,8,9,11,13],
+        keyLines: [3, 5, 7, 9, 14],
         customStepVariables: (variables) => {
           if (!variables || Object.keys(variables).length === 0) return null;
           return (
@@ -55,8 +51,8 @@ function LCSVisualizer() {
                   <span className="font-mono text-blue-600 font-semibold">i</span>
                   <span className="text-gray-500"> = </span>
                   <span className="font-mono text-gray-800 font-bold">{String(variables.i)}</span>
-                  {variables.char1 && (
-                    <span className="text-gray-400 ml-1">(char='{variables.char1}')</span>
+                  {variables.val1 !== undefined && (
+                    <span className="text-gray-400 ml-1">(值={variables.val1})</span>
                   )}
                 </div>
               )}
@@ -65,8 +61,8 @@ function LCSVisualizer() {
                   <span className="font-mono text-orange-600 font-semibold">j</span>
                   <span className="text-gray-500"> = </span>
                   <span className="font-mono text-gray-800 font-bold">{String(variables.j)}</span>
-                  {variables.char2 && (
-                    <span className="text-gray-400 ml-1">(char='{variables.char2}')</span>
+                  {variables.val2 !== undefined && (
+                    <span className="text-gray-400 ml-1">(值={variables.val2})</span>
                   )}
                 </div>
               )}
@@ -87,7 +83,7 @@ function LCSVisualizer() {
               {variables.match !== undefined && (
                 <div className="text-sm col-span-2">
                   {variables.match ? (
-                    <span className="text-green-600 font-bold">✓ 字符匹配 → 左上+1</span>
+                    <span className="text-green-600 font-bold">✓ 元素匹配 → 左上+1</span>
                   ) : (
                     <span className="text-red-500 font-medium">✗ 不匹配 → max(上, 左)</span>
                   )}
@@ -97,46 +93,45 @@ function LCSVisualizer() {
           );
         },
         render: ({ data }) => {
-          const text1: string[] = data.text1 || [];
-          const text2: string[] = data.text2 || [];
+          const seq1: number[] = data.seq1 || [];
+          const seq2: number[] = data.seq2 || [];
           const dp: number[][] = data.dp || [];
           const highlightI = data.highlightI ?? -1;
           const highlightJ = data.highlightJ ?? -1;
           const match = data.match ?? false;
           const updated = data.updated || false;
-          const lcs = data.lcs || "";
+          const lcs: number[] = data.lcs || [];
           const backtrackPath: [number, number][] = data.backtrackPath || [];
           const finished = data.finished || false;
 
           const backtrackSet = new Set(backtrackPath.map(([r, c]) => `${r},${c}`));
-          const m = text1.length;
-          const n = text2.length;
+          const m = seq1.length;
+          const n = seq2.length;
           const cellSize = Math.min(40, Math.max(28, 600 / Math.max(m + 1, n + 1, 8)));
 
           return (
             <div className="p-4">
               <CoreIdeaBox
-                idea='dp[i][j] = text1[0..i-1] 与 text2[0..j-1] 的LCS长度。字符相同时 dp[i][j] = dp[i-1][j-1] + 1；否则 dp[i][j] = max(dp[i-1][j], dp[i][j-1])。'
+                idea="dp[i][j] = P1 前 i 个数与 P2 前 j 个数的 LCS 长度。相同时 dp[i][j] = dp[i-1][j-1] + 1；否则 dp[i][j] = max(dp[i-1][j], dp[i][j-1])。"
                 color="purple"
                 features={[
-                  "时间复杂度 O(m×n)",
-                  "空间复杂度 O(m×n)，可优化到 O(min(m,n))",
-                  "经典二维DP",
-                  "回溯可得LCS序列",
+                  "时间复杂度 O(n²)",
+                  "空间复杂度 O(n²)，可优化到 O(n)",
+                  "经典二维DP（可视化演示用）",
+                  "n 很大时可用排列性质转 LIS：O(n log n)",
                 ]}
               />
-
 
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mt-4">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">
                   LCS DP 表
                 </h3>
 
-                {/* Strings display */}
+                {/* Sequences display */}
                 <div className="mb-4 flex items-center gap-4 text-sm">
-                  <span className="font-semibold text-gray-700">text1:</span>
+                  <span className="font-semibold text-gray-700">P1:</span>
                   <span className="font-mono text-gray-800">
-                    {text1.map((ch: string, idx: number) => (
+                    {seq1.map((v: number, idx: number) => (
                       <span
                         key={idx}
                         className={`inline-block w-7 h-7 leading-7 text-center rounded ${
@@ -145,15 +140,15 @@ function LCSVisualizer() {
                             : "bg-gray-100"
                         }`}
                       >
-                        {ch}
+                        {v}
                       </span>
                     ))}
                   </span>
                 </div>
                 <div className="mb-6 flex items-center gap-4 text-sm">
-                  <span className="font-semibold text-gray-700">text2:</span>
+                  <span className="font-semibold text-gray-700">P2:</span>
                   <span className="font-mono text-gray-800">
-                    {text2.map((ch: string, idx: number) => (
+                    {seq2.map((v: number, idx: number) => (
                       <span
                         key={idx}
                         className={`inline-block w-7 h-7 leading-7 text-center rounded ${
@@ -162,7 +157,7 @@ function LCSVisualizer() {
                             : "bg-gray-100"
                         }`}
                       >
-                        {ch}
+                        {v}
                       </span>
                     ))}
                   </span>
@@ -185,7 +180,7 @@ function LCSVisualizer() {
                         >
                           Ø
                         </th>
-                        {text2.map((ch: string, j: number) => (
+                        {seq2.map((v: number, j: number) => (
                           <th
                             key={j}
                             className={`sticky top-0 border border-gray-200 p-1 ${
@@ -195,7 +190,7 @@ function LCSVisualizer() {
                             }`}
                             style={{ width: cellSize }}
                           >
-                            {ch}
+                            {v}
                           </th>
                         ))}
                       </tr>
@@ -231,7 +226,7 @@ function LCSVisualizer() {
                                   : "bg-gray-100 text-gray-500"
                               }`}
                             >
-                              {text1[i - 1]}
+                              {seq1[i - 1]}
                             </td>
                             {row.map((val: number, j: number) => {
                               const isCurrent = i === highlightI && j === highlightJ;
@@ -267,10 +262,10 @@ function LCSVisualizer() {
                 {finished && (
                   <div className="mt-6 p-4 bg-violet-50 border border-violet-200 rounded-lg text-center">
                     <p className="text-lg font-bold text-violet-700">
-                      LCS = "{lcs}"，长度 = {lcs.length}
+                      LCS = [{lcs.join(", ")}]，长度 = {lcs.length}
                     </p>
                     <p className="text-sm text-violet-500 mt-1">
-                      绿色高亮路径 = 回溯路径（从右下角沿匹配字符斜上移动）
+                      绿色高亮路径 = 回溯路径（从右下角沿匹配元素斜上移动）
                     </p>
                   </div>
                 )}

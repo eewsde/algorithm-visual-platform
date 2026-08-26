@@ -15,7 +15,7 @@ import { VisualizationStep } from "./index";
  * 允许的输入值类型
  * 这些是算法输入可以包含的所有基本类型
  */
-export type InputValue = number | string | number[] | string[] | string[][] | boolean | (number | null)[] | any[];
+export type InputValue = number | string | number[] | string[] | string[][] | boolean | (number | null)[];
 
 /**
  * 输入对象的约束
@@ -81,9 +81,9 @@ export function isStringArray(value: unknown): value is string[] {
 }
 
 /**
- * 检查值是否为数组（数字或字符串）
+ * 检查值是否为数组（通用类型守卫，调用方需进一步检查元素类型）
  */
-export function isArray(value: unknown): value is number[] | string[] {
+export function isArray(value: unknown): value is unknown[] {
   return Array.isArray(value);
 }
 
@@ -159,7 +159,7 @@ export function getArrayValue<T extends ProblemInput>(
   key: keyof T
 ): number[] | string[] | undefined {
   const value = obj[key];
-  if (isArray(value)) {
+  if (isNumberArray(value) || isStringArray(value)) {
     return value;
   }
   return undefined;
@@ -273,7 +273,7 @@ export function getArrayVariable(
   const stepVars = getSafeVariables(variables);
   if (!stepVars) return undefined;
   const value = stepVars[key];
-  if (isArray(value)) {
+  if (isNumberArray(value) || isStringArray(value)) {
     return value;
   }
   return undefined;

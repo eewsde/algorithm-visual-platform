@@ -2,26 +2,28 @@ import { useSearchParams } from "react-router-dom";
 import { problems, categoryNames, methodNames } from "@/data";
 import { Difficulty, Category, SolutionMethod } from "@/types";
 import { Filter, LayoutGrid, Lightbulb } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from "@/store/useAppStore";
 import { ProblemGroupCard } from "@/components/ProblemGroupCard";
 import { useScrollRestore } from "@/hooks/useScrollRestore";
 
 function ProblemListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  
-  const [classifyMode, setClassifyMode] = useState<'category' | 'method'>(
-    (searchParams.get('mode') as 'category' | 'method') || 'category'
-  );
-  const [selectedCategory, setSelectedCategory] = useState<Category | "all">(
-    (searchParams.get('category') as Category) || "all"
-  );
-  const [selectedMethod, setSelectedMethod] = useState<SolutionMethod | "all">(
-    (searchParams.get('method') as SolutionMethod) || "all"
-  );
-  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | "all">(
-    (searchParams.get('difficulty') as Difficulty) || "all"
-  );
+
+  const urlMode = (searchParams.get('mode') as 'category' | 'method') || 'category';
+  const urlCategory = (searchParams.get('category') as Category) || 'all';
+  const urlMethod = (searchParams.get('method') as SolutionMethod) || 'all';
+  const urlDifficulty = (searchParams.get('difficulty') as Difficulty) || 'all';
+
+  const [classifyMode, setClassifyMode] = useState<'category' | 'method'>(urlMode);
+  const [selectedCategory, setSelectedCategory] = useState<Category | "all">(urlCategory);
+  const [selectedMethod, setSelectedMethod] = useState<SolutionMethod | "all">(urlMethod);
+  const [selectedDifficulty, setSelectedDifficulty] = useState<Difficulty | "all">(urlDifficulty);
+
+  useEffect(() => { setClassifyMode(urlMode); }, [urlMode]);
+  useEffect(() => { setSelectedCategory(urlCategory); }, [urlCategory]);
+  useEffect(() => { setSelectedMethod(urlMethod); }, [urlMethod]);
+  useEffect(() => { setSelectedDifficulty(urlDifficulty); }, [urlDifficulty]);
   
   const { getProgressStats } = useAppStore();
   const progressStats = getProgressStats(problems.length);

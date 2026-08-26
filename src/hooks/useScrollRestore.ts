@@ -18,27 +18,7 @@ export function useScrollRestore(
   const { saveScrollPosition, getScrollPosition } = useScrollStore();
   const scrollPath = path || location.pathname;
   const isRestoredRef = useRef<string | null>(null);
-  const throttleTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const previousPathRef = useRef<string | null>(null);
-
-  // 在路由变化前保存当前滚动位置
-  useLayoutEffect(() => {
-    if (!enabled) return;
-
-    const previousPath = previousPathRef.current;
-    if (previousPath && previousPath !== scrollPath) {
-      // 路径变化了，保存之前路径的滚动位置
-      if (containerRef?.current) {
-        const scrollTop = containerRef.current.scrollTop;
-        saveScrollPosition(previousPath, scrollTop);
-      } else {
-        const scrollY = window.scrollY;
-        saveScrollPosition(previousPath, scrollY);
-      }
-    }
-
-    previousPathRef.current = scrollPath;
-  }, [scrollPath, enabled, containerRef, saveScrollPosition]);
+  const throttleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 恢复滚动位置（路径变化时重置）
   useLayoutEffect(() => {
@@ -77,9 +57,24 @@ export function useScrollRestore(
         return false;
       };
 
+      // 用户主动滚动（滚轮/触摸）时放弃本次恢复，避免与用户操作打架
+      const scrollTarget = containerRef?.current || window;
+      let userAborted = false;
+      const handleUserInput = () => {
+        userAborted = true;
+      };
+      scrollTarget.addEventListener("wheel", handleUserInput, { passive: true });
+      scrollTarget.addEventListener("touchstart", handleUserInput, {
+        passive: true,
+      });
+      const removeUserInputListeners = () => {
+        scrollTarget.removeEventListener("wheel", handleUserInput);
+        scrollTarget.removeEventListener("touchstart", handleUserInput);
+      };
+
       // 监听滚动事件，如果检测到被重置到顶部，立即恢复
       const handleScrollReset = () => {
-        if (isRestoredRef.current === scrollPath) return;
+        if (userAborted || isRestoredRef.current === scrollPath) return;
 
         if (containerRef?.current) {
           const container = containerRef.current;
@@ -105,7 +100,6 @@ export function useScrollRestore(
         }
       };
 
-      const scrollTarget = containerRef?.current || window;
       scrollTarget.addEventListener("scroll", handleScrollReset, {
         passive: true,
       });
@@ -117,8 +111,15 @@ export function useScrollRestore(
         // 如果立即恢复失败，使用多次尝试机制
         let attempts = 0;
         const maxAttempts = 30;
+        let rafId: number | null = null;
 
         const tryRestore = () => {
+          rafId = null;
+          if (userAborted) {
+            // 用户已开始滚动，放弃恢复
+            isRestoredRef.current = scrollPath;
+            return true;
+          }
           attempts++;
 
           if (containerRef?.current) {
@@ -127,8 +128,9 @@ export function useScrollRestore(
 
             if (container.scrollHeight >= savedPosition) {
               if (
-                Math.abs(currentScrollTop - savedPosition) > 10 ||
-                (currentScrollTop === 0 && savedPosition > 0)
+                !userAborted &&
+                (Math.abs(currentScrollTop - savedPosition) > 10 ||
+                  (currentScrollTop === 0 && savedPosition > 0))
               ) {
                 container.scrollTop = savedPosition;
               }
@@ -144,8 +146,9 @@ export function useScrollRestore(
 
             if (docHeight >= savedPosition) {
               if (
-                Math.abs(currentScrollY - savedPosition) > 10 ||
-                (currentScrollY === 0 && savedPosition > 0)
+                !userAborted &&
+                (Math.abs(currentScrollY - savedPosition) > 10 ||
+                  (currentScrollY === 0 && savedPosition > 0))
               ) {
                 window.scrollTo({ top: savedPosition, behavior: "instant" });
               }
@@ -155,7 +158,7 @@ export function useScrollRestore(
           }
 
           if (attempts < maxAttempts) {
-            requestAnimationFrame(tryRestore);
+            rafId = requestAnimationFrame(tryRestore);
           } else {
             // 超时后强制恢复
             if (containerRef?.current) {
@@ -170,7 +173,7 @@ export function useScrollRestore(
 
         // 延迟开始尝试，确保懒加载组件有时间加载
         const timer = setTimeout(() => {
-          requestAnimationFrame(tryRestore);
+          rafId = requestAnimationFrame(tryRestore);
         }, 100);
 
         // 使用 MutationObserver 监听 DOM 变化，确保内容加载完成后恢复
@@ -184,7 +187,6 @@ export function useScrollRestore(
           observer.observe(containerRef.current, {
             childList: true,
             subtree: true,
-            attributes: true,
           });
         } else {
           observer = new MutationObserver(() => {
@@ -203,6 +205,7 @@ export function useScrollRestore(
           if (isRestoredRef.current === scrollPath) {
             clearInterval(checkTimer);
             scrollTarget.removeEventListener("scroll", handleScrollReset);
+            removeUserInputListeners();
             if (observer) observer.disconnect();
             return;
           }
@@ -212,7 +215,9 @@ export function useScrollRestore(
         return () => {
           clearTimeout(timer);
           clearInterval(checkTimer);
+          if (rafId !== null) cancelAnimationFrame(rafId);
           scrollTarget.removeEventListener("scroll", handleScrollReset);
+          removeUserInputListeners();
           if (observer) observer.disconnect();
         };
       } else {
@@ -221,6 +226,7 @@ export function useScrollRestore(
           if (isRestoredRef.current === scrollPath) {
             clearInterval(checkTimer);
             scrollTarget.removeEventListener("scroll", handleScrollReset);
+            removeUserInputListeners();
             return;
           }
           handleScrollReset();
@@ -230,12 +236,14 @@ export function useScrollRestore(
         const stopTimer = setTimeout(() => {
           clearInterval(checkTimer);
           scrollTarget.removeEventListener("scroll", handleScrollReset);
+          removeUserInputListeners();
         }, 3000);
 
         return () => {
           clearTimeout(stopTimer);
           clearInterval(checkTimer);
           scrollTarget.removeEventListener("scroll", handleScrollReset);
+          removeUserInputListeners();
         };
       }
     } else {

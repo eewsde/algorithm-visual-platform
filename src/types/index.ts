@@ -89,7 +89,7 @@ export interface Problem {
   difficulty: Difficulty;
   category: Category[]; // 题型分类（数据结构）
   methods: SolutionMethod[]; // 解决方式（算法思想）
-  leetcodeNumber: number;
+  luoguNumber: string; // 支持 "P1048"、"B3611"、"B3637" 等带前缀题号
   description: string;
   examples: Example[];
   constraints?: string[];

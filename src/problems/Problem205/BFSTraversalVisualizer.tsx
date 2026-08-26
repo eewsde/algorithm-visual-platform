@@ -12,6 +12,10 @@ import {
 import { PerformancePanel, createTraversalBenchmark } from "@/components/PerformancePanel";
 import { getProblemById } from "@/data";
 
+// 模块级常量：benchmark 配置与题目信息只创建/查询一次，避免每步渲染重复创建
+const traversalBenchmark = createTraversalBenchmark();
+const bfsDfsProblem = getProblemById(205);
+
 interface TraversalInputData extends ProblemInput {
   input: string;
 }
@@ -50,42 +54,50 @@ function BFSDFSPage() {
         <ConfigurableVisualizer<TraversalInputData, any>
           config={{
             defaultInput: {
-              input: "6 7\n1 2\n1 3\n2 4\n2 5\n3 6\n4 5\n5 6",
+              input: "8 9\n1 2\n1 3\n1 4\n2 5\n2 6\n3 7\n4 7\n4 8\n7 8",
             },
             algorithm: (input) => {
               const parsed = parseTraversalInput(input.input, 1);
               return mode === "bfs" ? generateBFSSteps(parsed) : generateDFSSteps(parsed);
             },
+            // 模式切换时重新生成步骤但保留当前输入（不重挂载组件）
+            regenKey: mode,
           inputTypes: [{ type: "string", key: "input", label: "图数据" }],
           inputFields: [
             {
               type: "string",
               key: "input",
-              label: "图数据（格式：n m，然后 m 行 u v）",
-              placeholder: "6 7\n1 2\n1 3\n2 4\n2 5\n3 6\n4 5\n5 6",
+              label: "图数据（格式：n m，然后 m 行 u v，u→v 有向引用边）",
+              placeholder: "8 9\n1 2\n1 3\n1 4\n2 5\n2 6\n3 7\n4 7\n4 8\n7 8",
             },
           ],
           testCases: [
             {
-              label: "示例1（连通图）",
+              label: "示例1（洛谷官方样例）",
+              value: {
+                input: "8 9\n1 2\n1 3\n1 4\n2 5\n2 6\n3 7\n4 7\n4 8\n7 8",
+              },
+            },
+            {
+              label: "示例2（连通图）",
               value: {
                 input: "6 7\n1 2\n1 3\n2 4\n2 5\n3 6\n4 5\n5 6",
               },
             },
             {
-              label: "示例2（树形图）",
+              label: "示例3（树形图）",
               value: {
                 input: "7 6\n1 2\n1 3\n2 4\n2 5\n3 6\n3 7",
               },
             },
             {
-              label: "示例3（链形图）",
+              label: "示例4（链形图）",
               value: {
                 input: "5 4\n1 2\n2 3\n3 4\n4 5",
               },
             },
           ],
-        keyLines: [8,9,23,25,26],
+        keyLines: [8, 9, 23, 26, 27, 30],
           customStepVariables: (variables) => {
             if (!variables || Object.keys(variables).length === 0) return null;
             return (
@@ -145,6 +157,7 @@ function BFSDFSPage() {
               from: e.from,
               to: e.to,
               isCurrent: e.type === "current",
+              isVisited: e.type === "visited",
             }));
 
             return (
@@ -189,7 +202,7 @@ function BFSDFSPage() {
                   <GraphTemplate
                     nodes={graphNodes}
                     edges={graphEdges}
-                    directed={false}
+                    directed={true}
                     layout={{ type: "circle", nodeSize: 44, width: 650, height: 400 }}
                     renderNode={(node) => {
                       const state = (node as any).customState?.state || "unvisited";
@@ -210,6 +223,18 @@ function BFSDFSPage() {
                     }}
                     renderLegend={() => (
                       <div className="flex items-center justify-center gap-4 mt-4 text-sm flex-wrap">
+                        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
+                          <div className="w-3 h-0.5 bg-yellow-400" />
+                          <span className="text-gray-700">当前遍历边</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
+                          <div className="w-3 h-0.5 bg-green-400" />
+                          <span className="text-gray-700">已遍历边</span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
+                          <span className="text-gray-500">→</span>
+                          <span className="text-gray-700">箭头 = 引用方向（X→Y）</span>
+                        </div>
                         <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
                           <div className="w-3 h-3 rounded-full bg-gray-300" />
                           <span className="text-gray-700">未访问</span>
@@ -258,8 +283,8 @@ function BFSDFSPage() {
                     </div>
 
                     <PerformancePanel
-                      comparisons={getProblemById(205)?.solution?.comparisons || []}
-                      benchmark={createTraversalBenchmark()}
+                      comparisons={bfsDfsProblem?.solution?.comparisons || []}
+                      benchmark={traversalBenchmark}
                     />
                   </div>
                 </div>

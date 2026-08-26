@@ -36,7 +36,7 @@ function DijkstraVisualizer() {
     <ConfigurableVisualizer<DijkstraInput, DijkstraData>
       config={{
         defaultInput: {
-          input: "4 5 1\n1 2 2\n1 3 5\n2 3 1\n2 4 6\n3 4 2",
+          input: "4 6 1\n1 2 2\n2 3 2\n2 4 1\n1 3 5\n3 4 3\n1 4 4",
         },
         algorithm: (input) => {
           return generateDijkstraSteps(parseDijkstraInput(input.input));
@@ -47,13 +47,13 @@ function DijkstraVisualizer() {
             type: "string",
             key: "input",
             label: "图数据（格式：n m start，然后 m 行 u v w）",
-            placeholder: "4 5 1\n1 2 2\n1 3 5\n2 3 1\n2 4 6\n3 4 2",
+            placeholder: "4 6 1\n1 2 2\n2 3 2\n2 4 1\n1 3 5\n3 4 3\n1 4 4",
           },
         ],
         testCases: [
           {
-            label: "示例1",
-            value: { input: "4 5 1\n1 2 2\n1 3 5\n2 3 1\n2 4 6\n3 4 2" },
+            label: "示例1（洛谷官方样例）",
+            value: { input: "4 6 1\n1 2 2\n2 3 2\n2 4 1\n1 3 5\n3 4 3\n1 4 4" },
           },
           {
             label: "示例2",
@@ -64,7 +64,7 @@ function DijkstraVisualizer() {
             value: { input: "6 9 1\n1 2 7\n1 3 9\n1 6 14\n2 3 10\n2 4 15\n3 4 11\n3 6 2\n4 5 6\n5 6 9" },
           },
         ],
-        keyLines: [14,15,24,25,26],
+        keyLines: [12, 14, 17, 24, 29],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -109,12 +109,17 @@ function DijkstraVisualizer() {
           }
           return null;
         },
-        render: ({ data }) => {
+        render: ({ data, visualization }) => {
+          // 当前步骤顶层 highlightedNodes 记录了"当前选中节点 u"（字符串形式的节点 id），映射为节点的 isCurrent 状态
+          const highlightedSet = new Set(
+            (visualization?.currentStepData?.highlightedNodes || []).map((id) => String(id))
+          );
+
           const nodes: GraphNodeState[] = (data.nodes || []).map((n) => ({
             id: n.id,
             label: `${n.id}`,
             value: n.distance === Infinity ? "∞" : n.distance,
-            isCurrent: false,
+            isCurrent: highlightedSet.has(String(n.id)),
           }));
 
           const edges: GraphEdgeState[] = (data.edges || []).map((e) => ({
@@ -167,7 +172,12 @@ function DijkstraVisualizer() {
                     let textColor = "text-gray-700";
                     let borderColor = "border-gray-300";
 
-                    if (node.isVisited) {
+                    if (node.isCurrent) {
+                      // 当前选中节点：独立视觉状态（优先于已访问）
+                      bgColor = "bg-yellow-400";
+                      textColor = "text-white";
+                      borderColor = "border-yellow-500";
+                    } else if (node.isVisited) {
                       bgColor = "bg-green-500";
                       textColor = "text-white";
                       borderColor = "border-green-600";
@@ -200,6 +210,10 @@ function DijkstraVisualizer() {
                         <span className="text-gray-700">未访问</span>
                       </div>
                       <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
+                        <div className="w-4 h-4 bg-yellow-400 rounded-full" />
+                        <span className="text-gray-700">当前选中节点</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
                         <div className="w-4 h-4 bg-green-500 rounded-full" />
                         <span className="text-gray-700">已访问</span>
                       </div>
@@ -209,7 +223,11 @@ function DijkstraVisualizer() {
                       </div>
                       <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
                         <div className="w-3 h-0.5 bg-green-400" />
-                        <span className="text-gray-700">已访问边</span>
+                        <span className="text-gray-700">最短路径树边</span>
+                      </div>
+                      <div className="flex items-center gap-2 bg-gray-50 px-3 py-1.5 rounded-lg">
+                        <div className="w-3 h-0.5 bg-gray-300" />
+                        <span className="text-gray-700">未使用边</span>
                       </div>
                     </div>
                   )}

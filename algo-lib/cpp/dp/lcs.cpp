@@ -1,18 +1,25 @@
 /**
- * 最长公共子序列 (LCS)
+ * 最长公共子序列（洛谷 P1439）—— 排列转 LIS
  *
- * 题目：给定两个字符串 text1 和 text2，求它们的最长公共子序列的长度。
- * 算法：二维 DP。dp[i][j] = text1 前 i 个字符与 text2 前 j 个字符的 LCS 长度。
- *       text1[i-1] == text2[j-1] → dp[i][j] = dp[i-1][j-1] + 1
- *       text1[i-1] != text2[j-1] → dp[i][j] = max(dp[i-1][j], dp[i][j-1])
+ * 题目：给出 1..n 的两个排列 P1、P2，求它们的最长公共子序列的长度（n ≤ 10^5）。
+ * 算法：两个序列都是排列 → 记录 P1 中每个数的位置 pos[x]；
+ *       把 P2 的每个数换成它在 P1 中的位置，则 LCS 转化为最长上升子序列（LIS），
+ *       用贪心 + 二分 O(n log n) 求解。
  *
- * 时间复杂度：O(m × n)
- * 空间复杂度：O(m × n)，可优化到 O(min(m, n))
+ * 输入：第一行 n；接下来两行，每行 n 个数（1..n 的排列）。
+ * 输出：一个整数，LCS 长度。
+ *
+ * 官方样例：
+ *   5
+ *   3 2 1 4 5
+ *   1 2 3 4 5
+ *   → 3
+ *
+ * 时间复杂度：O(n log n)    空间复杂度：O(n)
  */
 
 #include <iostream>
 #include <vector>
-#include <string>
 #include <algorithm>
 using namespace std;
 
@@ -20,37 +27,31 @@ int main() {
     ios::sync_with_stdio(false);
     cin.tie(nullptr);
 
-    string text1, text2;
-    cin >> text1 >> text2;
+    int n;
+    cin >> n;
 
-    int m = text1.size(), n = text2.size();
-    vector<vector<int>> dp(m + 1, vector<int>(n + 1, 0));
-
-    for (int i = 1; i <= m; i++) {
-        for (int j = 1; j <= n; j++) {
-            if (text1[i - 1] == text2[j - 1]) {
-                dp[i][j] = dp[i - 1][j - 1] + 1;
-            } else {
-                dp[i][j] = max(dp[i - 1][j], dp[i][j - 1]);
-            }
-        }
+    // 记录 P1 中每个数的位置（1 基）
+    vector<int> pos(n + 1);
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        pos[x] = i + 1;
     }
 
-    // 回溯 LCS 序列
-    string lcs;
-    int i = m, j = n;
-    while (i > 0 && j > 0) {
-        if (text1[i - 1] == text2[j - 1]) {
-            lcs = text1[i - 1] + lcs;
-            i--; j--;
-        } else if (dp[i - 1][j] > dp[i][j - 1]) {
-            i--;
+    // 读 P2，把每个数换成 pos[x]，求其 LIS 长度
+    vector<int> tails; // tails[i] = 长度为 i+1 的 LIS 的最小结尾值
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        int idx = pos[x]; // 转成在 P1 中的位置
+        auto it = lower_bound(tails.begin(), tails.end(), idx);
+        if (it == tails.end()) {
+            tails.push_back(idx);
         } else {
-            j--;
+            *it = idx;
         }
     }
 
-    cout << dp[m][n] << endl;
-    cout << lcs << endl;
+    cout << tails.size() << endl;
     return 0;
 }

@@ -4,6 +4,8 @@ export interface PrimEdge {
   from: number;
   to: number;
   weight: number;
+  // 输入顺序编号（0-based），用于区分平行边/双向重复边
+  index: number;
 }
 
 export interface PrimInput {
@@ -13,19 +15,38 @@ export interface PrimInput {
 
 export function parsePrimInput(input: string): PrimInput {
   const lines = input.trim().split("\n").filter((l) => l.trim());
+  if (lines.length === 0) {
+    throw new Error("请输入图数据");
+  }
   const firstLine = lines[0].trim().split(/\s+/);
   const n = parseInt(firstLine[0]);
   const m = parseInt(firstLine[1]);
+  if (isNaN(n) || isNaN(m)) {
+    throw new Error("n、m 必须为整数");
+  }
+  if (n < 1) {
+    throw new Error("节点数 n 必须 ≥ 1");
+  }
+  if (n > 200 || m > 5000) {
+    throw new Error("规模过大：节点数最多 200、边数最多 5000，以保证可视化流畅");
+  }
 
   const edges: PrimEdge[] = [];
+  let edgeIndex = 0;
   for (let i = 1; i <= m && i < lines.length; i++) {
     const parts = lines[i].trim().split(/\s+/);
     if (parts.length >= 3) {
-      edges.push({
-        from: parseInt(parts[0]),
-        to: parseInt(parts[1]),
-        weight: parseInt(parts[2]),
-      });
+      const from = parseInt(parts[0]);
+      const to = parseInt(parts[1]);
+      const weight = parseInt(parts[2]);
+      if (isNaN(from) || isNaN(to) || isNaN(weight)) {
+        throw new Error("边数据格式错误");
+      }
+      // 端点必须在 [1, n]，否则后面的 adj.get(e.from)! 会崩溃
+      if (from < 1 || from > n || to < 1 || to > n) {
+        throw new Error("边端点编号超出范围");
+      }
+      edges.push({ from, to, weight, index: edgeIndex++ });
     }
   }
   return { nodes: n, edges };
@@ -36,11 +57,11 @@ export function generatePrimSteps(input: PrimInput): VisualizationStep[] {
   const steps: VisualizationStep[] = [];
   let stepId = 0;
 
-  const adj: Map<number, { to: number; weight: number }[]> = new Map();
+  const adj: Map<number, { to: number; weight: number; index: number }[]> = new Map();
   for (let i = 1; i <= nodes; i++) adj.set(i, []);
   for (const e of edges) {
-    adj.get(e.from)!.push({ to: e.to, weight: e.weight });
-    adj.get(e.to)!.push({ to: e.from, weight: e.weight });
+    adj.get(e.from)!.push({ to: e.to, weight: e.weight, index: e.index });
+    adj.get(e.to)!.push({ to: e.from, weight: e.weight, index: e.index });
   }
 
   const inMST = new Array(nodes + 1).fill(false);
@@ -66,12 +87,12 @@ export function generatePrimSteps(input: PrimInput): VisualizationStep[] {
   });
 
   for (let iter = 0; iter < nodes - 1; iter++) {
-    const candidates: { from: number; to: number; weight: number }[] = [];
+    const candidates: { from: number; to: number; weight: number; index: number }[] = [];
     for (let u = 1; u <= nodes; u++) {
       if (!inMST[u]) continue;
-      for (const { to: v, weight: w } of adj.get(u)!) {
+      for (const { to: v, weight: w, index } of adj.get(u)!) {
         if (!inMST[v]) {
-          candidates.push({ from: u, to: v, weight: w });
+          candidates.push({ from: u, to: v, weight: w, index });
         }
       }
     }
@@ -84,7 +105,9 @@ export function generatePrimSteps(input: PrimInput): VisualizationStep[] {
       if (candidates[k].weight < best.weight) best = candidates[k];
     }
 
-    const candidateSet = new Set(candidates.map((c) => `${c.from}-${c.to}`));
+    // 已选边与候选边均按 index 匹配（避免平行边/双向重复边按 from-to 值匹配出错）
+    const selectedIndexSet = new Set(selectedEdges.map((s) => s.index));
+    const candidateIndexSet = new Set(candidates.map((c) => c.index));
 
     steps.push({
       id: stepId++,
@@ -97,24 +120,13 @@ export function generatePrimSteps(input: PrimInput): VisualizationStep[] {
           isCurrent: i + 1 === best.to,
         })),
         edges: edges.map((e) => {
-          const key1 = `${e.from}-${e.to}`;
-          const key2 = `${e.to}-${e.from}`;
-          if (
-            selectedEdges.some(
-              (s) =>
-                (s.from === e.from && s.to === e.to) ||
-                (s.from === e.to && s.to === e.from),
-            )
-          ) {
+          if (selectedIndexSet.has(e.index)) {
             return { ...e, status: "selected" as const };
           }
-          if (
-            key1 === `${best.from}-${best.to}` ||
-            key2 === `${best.from}-${best.to}`
-          ) {
+          if (e.index === best.index) {
             return { ...e, status: "current" as const };
           }
-          if (candidateSet.has(key1) || candidateSet.has(key2)) {
+          if (candidateIndexSet.has(e.index)) {
             return { ...e, status: "candidate" as const };
           }
           return { ...e, status: "pending" as const };
@@ -133,8 +145,11 @@ export function generatePrimSteps(input: PrimInput): VisualizationStep[] {
     });
 
     inMST[best.to] = true;
-    selectedEdges.push({ from: best.from, to: best.to, weight: best.weight });
+    selectedEdges.push({ from: best.from, to: best.to, weight: best.weight, index: best.index });
     totalWeight += best.weight;
+
+    // 选择后重新计算已选 index 集合（包含刚选入的边）
+    const newSelectedIndexSet = new Set(selectedEdges.map((s) => s.index));
 
     steps.push({
       id: stepId++,
@@ -146,13 +161,7 @@ export function generatePrimSteps(input: PrimInput): VisualizationStep[] {
           inMST: inMST[i + 1],
         })),
         edges: edges.map((e) => {
-          if (
-            selectedEdges.some(
-              (s) =>
-                (s.from === e.from && s.to === e.to) ||
-                (s.from === e.to && s.to === e.from),
-            )
-          ) {
+          if (newSelectedIndexSet.has(e.index)) {
             return { ...e, status: "selected" as const };
           }
           return { ...e, status: "pending" as const };
@@ -185,13 +194,7 @@ export function generatePrimSteps(input: PrimInput): VisualizationStep[] {
         inMST: inMST[i + 1],
       })),
       edges: edges.map((e) => {
-        if (
-          selectedEdges.some(
-            (s) =>
-              (s.from === e.from && s.to === e.to) ||
-              (s.from === e.to && s.to === e.from),
-          )
-        ) {
+        if (selectedEdges.some((s) => s.index === e.index)) {
           return { ...e, status: "selected" as const };
         }
         return { ...e, status: "pending" as const };
