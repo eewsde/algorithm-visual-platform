@@ -92,12 +92,8 @@ function ProblemPage() {
   };
   
   const handleComplete = () => {
+    // 只标记完成，停留当前页；不再自动跳转（跳转行为由"下一题"按钮显式控制）
     markAsCompleted(currentId);
-    if (hasNext) {
-      handleNext();
-    } else {
-      navigate('/problems');
-    }
   };
   
   const handleStartLearning = () => {
@@ -138,7 +134,8 @@ function ProblemPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-80px)]">
+    // 桌面端固定视口高度（左右分栏内部滚动）；移动端自然高度（上下堆叠）
+    <div className="lg:h-[calc(100vh-80px)]">
       {/* 顶部导航栏 */}
       <div className="px-6 py-3 bg-white border-b border-gray-200 shadow-sm">
         <div className="flex items-center justify-between">
@@ -237,10 +234,10 @@ function ProblemPage() {
         </div>
       </div>
 
-      {/* 左右分栏布局 */}
-      <div className="flex h-[calc(100%-56px)]">
+      {/* 左右分栏布局：桌面端并排（内部滚动）；移动端上下堆叠（页面自然滚动） */}
+      <div className="flex flex-col lg:flex-row lg:h-[calc(100%-56px)]">
         {/* 左侧：题目描述和题解 */}
-        <div ref={descriptionContainerRef} className="w-1/2 border-r border-gray-200 overflow-y-auto bg-gray-50">
+        <div ref={descriptionContainerRef} className="w-full lg:w-1/2 border-b lg:border-b-0 lg:border-r border-gray-200 lg:overflow-y-auto bg-gray-50">
           <div className="p-6 space-y-6">
             {/* 题目信息 */}
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -322,8 +319,8 @@ function ProblemPage() {
           </div>
         </div>
 
-        {/* 右侧：可视化区域 */}
-        <div className="w-1/2 bg-white overflow-hidden flex flex-col">
+        {/* 右侧：可视化区域（移动端给固定高度便于内部滚动） */}
+        <div className="w-full lg:w-1/2 bg-white overflow-hidden flex flex-col h-[75vh] lg:h-auto">
           <VisualizerRenderer problemId={problem.id} />
         </div>
       </div>

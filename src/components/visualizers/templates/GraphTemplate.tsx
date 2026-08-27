@@ -529,9 +529,11 @@ export function GraphTemplate({
                   top: pos.y - nodeSize / 2,
                   width: nodeSize,
                   height: nodeSize,
-                  // 仅缩放过渡；left/top 瞬时更新，保证与 SVG 边线（同步更新）始终对齐
-                  transform: node.isCurrent ? "scale(1.1)" : "scale(1)",
-                  transition: "transform 0.3s ease",
+                  // 仅"当前节点"加缩放 transform；其余节点不设 transform——
+                  // 避免 iOS Safari 对滚动容器内 transform 图层的合成偏移（节点与 SVG 边线错位）
+                  ...(node.isCurrent
+                    ? { transform: "scale(1.1)", transition: "transform 0.3s ease" }
+                    : {}),
                 }}
               >
                 {renderNode(node)}

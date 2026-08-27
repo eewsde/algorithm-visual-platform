@@ -19,8 +19,10 @@ export function ProblemGroupCard({
   getDifficultyColor,
   getDifficultyText,
 }: ProblemGroupCardProps) {
-  const isCompleted = useAppStore((s) => s.isCompleted);
-  const isFavorite = useAppStore((s) => s.isFavorite);
+  // 订阅真实数据集合（而非函数引用）：进度/收藏变化时卡片会立即重渲染，
+  // 避免"返回界面不统计"这类陈旧显示问题
+  const completedSet = useAppStore((s) => s.completedProblems);
+  const favoriteSet = useAppStore((s) => s.favoriteProblems);
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden flex flex-col max-h-[40rem]">
@@ -45,7 +47,7 @@ export function ProblemGroupCard({
             <div className="flex items-center justify-between gap-4">
               {/* 左侧：状态 + 编号 + 标题 */}
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                {isCompleted(problem.id) ? (
+                {completedSet.has(problem.id) ? (
                   <svg 
                     className="flex-shrink-0" 
                     viewBox="0 0 1024 1024" 
@@ -69,7 +71,7 @@ export function ProblemGroupCard({
                   </h4>
                 </Tooltip>
                 
-                {isFavorite(problem.id) && (
+                {favoriteSet.has(problem.id) && (
                   <Heart className="text-red-500 flex-shrink-0" size={16} fill="currentColor" />
                 )}
               </div>
