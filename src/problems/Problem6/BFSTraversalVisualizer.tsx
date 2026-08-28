@@ -14,7 +14,7 @@ import { getProblemById } from "@/data";
 
 // 模块级常量：benchmark 配置与题目信息只创建/查询一次，避免每步渲染重复创建
 const traversalBenchmark = createTraversalBenchmark();
-const bfsDfsProblem = getProblemById(205);
+const bfsDfsProblem = getProblemById(6);
 
 interface TraversalInputData extends ProblemInput {
   input: string;
@@ -97,7 +97,7 @@ function BFSDFSPage() {
               },
             },
           ],
-        keyLines: [8, 9, 23, 26, 27, 30],
+        
           customStepVariables: (variables) => {
             if (!variables || Object.keys(variables).length === 0) return null;
             return (

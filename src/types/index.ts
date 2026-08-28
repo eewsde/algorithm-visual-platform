@@ -68,9 +68,11 @@ export interface SolutionConfig {
   methodDescription: string; // 方法简介
   steps: string[]; // 算法步骤
   advantages: string[]; // 核心优势
-  code?: string; // 代码实现
-  language?: string; // 代码语言，默认 typescript
-  keyLines?: number[]; // 关键代码行号（用于显示绿色箭头提示）
+  code?: string; // 代码实现（兼容旧版单语言）
+  language?: string; // 代码语言，默认 typescript（兼容旧版）
+  keyLines?: number[]; // 关键代码行号（兼容旧版）
+  // 多语言代码版本（如 C++/Python）：存在时题解区渲染语言切换标签页
+  codeVersions?: CodeVersion[];
   timeComplexity: {
     value: string; // 如 "O(n)"
     description: string; // 说明
@@ -80,6 +82,14 @@ export interface SolutionConfig {
     description: string;
   };
   comparisons?: MethodComparison[]; // 方法对比
+}
+
+// 单个语言的代码版本
+export interface CodeVersion {
+  language: string; // 语法高亮语言："cpp" / "python" / "typescript" ...
+  label: string; // 标签页显示名："C++" / "Python"
+  code: string; // 代码内容
+  keyLines?: number[]; // 该语言版本的关键行（静态高亮）
 }
 
 // 题目信息

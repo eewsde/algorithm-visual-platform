@@ -15,15 +15,15 @@ import { ComponentType, lazy } from "react";
  * value: 懒加载的可视化组件
  */
 export const visualizerRegistry: Record<number, ComponentType> = {
-  200: lazy(() => import("./Problem200/DijkstraVisualizer")),
-  201: lazy(() => import("./Problem201/KruskalVisualizer")),
-  202: lazy(() => import("./Problem202/FloydVisualizer")),
-  203: lazy(() => import("./Problem203/Knapsack01Visualizer")),
-  204: lazy(() => import("./Problem204/PrimVisualizer")),
-  205: lazy(() => import("./Problem205/BFSTraversalVisualizer")),
-  206: lazy(() => import("./Problem206/TopoSortVisualizer")),
-  207: lazy(() => import("./Problem207/LISVisualizer")),
-  208: lazy(() => import("./Problem208/LCSVisualizer")),
+  1: lazy(() => import("./Problem1/DijkstraVisualizer")),
+  2: lazy(() => import("./Problem2/KruskalVisualizer")),
+  3: lazy(() => import("./Problem3/FloydVisualizer")),
+  4: lazy(() => import("./Problem4/Knapsack01Visualizer")),
+  5: lazy(() => import("./Problem5/PrimVisualizer")),
+  6: lazy(() => import("./Problem6/BFSTraversalVisualizer")),
+  7: lazy(() => import("./Problem7/TopoSortVisualizer")),
+  8: lazy(() => import("./Problem8/LISVisualizer")),
+  9: lazy(() => import("./Problem9/LCSVisualizer")),
 };
 
 /**

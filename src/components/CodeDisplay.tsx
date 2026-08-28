@@ -7,6 +7,8 @@ interface CodeDisplayProps {
   language?: string;
   highlightedLines?: number[];
   title?: string;
+  /** 是否应用可视化步骤的实时行高亮（行号按 TypeScript 版对齐；C++/Python 版应设为 false） */
+  useLiveHighlight?: boolean;
 }
 
 function CodeDisplay({
@@ -14,15 +16,16 @@ function CodeDisplay({
   language = "typescript",
   highlightedLines = [],
   title = "代码实现",
+  useLiveHighlight = true,
 }: CodeDisplayProps) {
   const liveLines = useCodeStore((s) => s.highlightLines);
-  const activeLines = liveLines.length > 0 ? liveLines : highlightedLines;
+  const activeLines = useLiveHighlight && liveLines.length > 0 ? liveLines : highlightedLines;
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
       <div className="bg-gray-100 px-4 py-2 border-b border-gray-200 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
-        {liveLines.length > 0 && (
+        {useLiveHighlight && liveLines.length > 0 && (
           <span className="text-xs text-green-600 font-medium animate-pulse">● 实时同步</span>
         )}
       </div>

@@ -3,7 +3,7 @@ import { Problem, Difficulty, Category, SolutionMethod } from "@/types";
 export const luoguProblems: Problem[] = [
   // ===== 图论：最短路 =====
   {
-    id: 200,
+    id: 1,
     luoguNumber: "P4779",
     title: "【模板】单源最短路径（标准版）",
     difficulty: Difficulty.MEDIUM,
@@ -21,59 +21,125 @@ export const luoguProblems: Problem[] = [
         explanation: "从节点1出发：到节点2最短距离=2，到节点3最短距离=4（1→2→3），到节点4最短距离=3（1→2→4）。",
       },
     ],
+
     constraints: [
       "1 ≤ n ≤ 10^5",
       "1 ≤ m ≤ 2×10^5",
       "0 ≤ w ≤ 10^9",
       "图中所有权值为非负数",
     ],
+
     hints: [
       "使用邻接表存储图",
       "使用优先队列（堆）优化",
       "dist[v] = min(dist[v], dist[u] + w)",
       "将所有点分为已确定最短路的集合和未确定的集合",
     ],
+
     solution: {
       methodName: "Dijkstra（暴力版）",
       methodDescription:
         "Dijkstra算法使用贪心策略，每次线性扫描所有节点找出未访问中距离最小的节点，对其所有出边进行松弛操作。暴力实现O(V²+E)，竞赛中通常使用优先队列优化至O((V+E)logV)。可视化采用暴力版以清晰展示每一步的选择过程。",
-      code: `function dijkstra(n: number, edges: [number, number, number][], start: number): number[] {
-  const INF = Infinity;
-  const dist: number[] = new Array(n + 1).fill(INF);
-  const visited: boolean[] = new Array(n + 1).fill(false);
-  const adj: Map<number, [number, number][]> = new Map();
+      // 多语言代码版本（题解区顶部可切换 C++ / Python）
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
 
-  for (let i = 1; i <= n; i++) adj.set(i, []);
-  for (const [u, v, w] of edges) {
-    adj.get(u)!.push([v, w]);
-  }
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
 
-  dist[start] = 0;
+    int n, m, s;                     // 点数、边数、起点
+    cin >> n >> m >> s;
 
-  for (let count = 0; count < n; count++) {
-    // 找到未访问的最小距离节点
-    let u = -1, minDist = INF;
-    for (let i = 1; i <= n; i++) {
-      if (!visited[i] && dist[i] < minDist) {
-        minDist = dist[i];
-        u = i;
-      }
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});    // 有向边
     }
-    if (u === -1) break;
-    visited[u] = true;
 
-    // 松弛操作
-    for (const [v, w] of adj.get(u) || []) {
-      if (dist[u] + w < dist[v]) {
-        dist[v] = dist[u] + w;
-      }
+    const int INF = INT_MAX;
+    vector<int> dist(n + 1, INF);    // 最短距离
+    vector<bool> visited(n + 1, false);
+    dist[s] = 0;
+
+    for (int cnt = 0; cnt < n; cnt++) {
+        // 找未访问中距离最小的节点
+        int u = -1, minDist = INF;
+        for (int i = 1; i <= n; i++) {
+            if (!visited[i] && dist[i] < minDist) {
+                minDist = dist[i];
+                u = i;
+            }
+        }
+        if (u == -1) break;          // 剩余节点不可达
+        visited[u] = true;
+
+        // 松弛 u 的所有出边
+        for (auto [v, w] : adj[u]) {
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+            }
+        }
     }
-  }
 
-  return dist.slice(1);
+    for (int i = 1; i <= n; i++) {
+        cout << (dist[i] == INF ? -1 : dist[i])
+             << (i == n ? "\\n" : " ");
+    }
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [12, 14, 17, 24, 29],
+          keyLines: [23, 25, 28, 34, 35, 39, 40],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `import sys
+
+def main():
+    input = sys.stdin.readline
+    n, m, s = map(int, input().split())
+
+    adj = [[] for _ in range(n + 1)]
+    for _ in range(m):
+        u, v, w = map(int, input().split())
+        adj[u].append((v, w))        # 有向边
+
+    INF = float('inf')
+    dist = [INF] * (n + 1)           # 最短距离
+    visited = [False] * (n + 1)
+    dist[s] = 0
+
+    for _ in range(n):
+        # 找未访问中距离最小的节点
+        u, min_dist = -1, INF
+        for i in range(1, n + 1):
+            if not visited[i] and dist[i] < min_dist:
+                min_dist = dist[i]
+                u = i
+        if u == -1:
+            break                    # 剩余节点不可达
+        visited[u] = True
+
+        # 松弛 u 的所有出边
+        for v, w in adj[u]:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+
+    print(' '.join(str(-1 if dist[i] == INF else dist[i]) for i in range(1, n + 1)))
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [15, 17, 20, 24, 26, 30, 31],
+        },
+      ],
+
       steps: [
         "初始化dist数组，dist[start]=0，其余为∞",
         "从未访问节点中选择dist最小的节点u",
@@ -81,6 +147,7 @@ export const luoguProblems: Problem[] = [
         "对u的所有邻居v进行松弛：dist[v]=min(dist[v], dist[u]+w)",
         "重复直到所有节点已访问或无法到达剩余节点",
       ],
+
       advantages: [
         "时间复杂度O(V²+E)，堆优化可降至O((V+E)logV)",
         "空间复杂度O(V+E)",
@@ -125,7 +192,7 @@ export const luoguProblems: Problem[] = [
 
   // ===== 图论：最小生成树 =====
   {
-    id: 201,
+    id: 2,
     luoguNumber: "P3366",
     title: "【模板】最小生成树",
     difficulty: Difficulty.MEDIUM,
@@ -158,40 +225,119 @@ export const luoguProblems: Problem[] = [
       methodName: "Kruskal + 并查集",
       methodDescription:
         "Kruskal算法将所有边按权值从小到大排序，依次检查每条边，如果边的两端不在同一集合中（使用并查集判断），则选择该边加入MST。",
-      code: `function kruskal(n: number, edges: [number, number, number][]): number {
-  // 按边权排序
-  edges.sort((a, b) => a[2] - b[2]);
+      // 多语言代码版本（题解区顶部可切换 C++ / Python）
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
 
-  const parent = Array.from({ length: n + 1 }, (_, i) => i);
-  const rank = new Array(n + 1).fill(0);
+struct Edge { int u, v, w; };
 
-  function find(x: number): number {
-    if (parent[x] !== x) parent[x] = find(parent[x]);
-    return parent[x];
-  }
+vector<int> parent, rnk;
 
-  function union(x: number, y: number): boolean {
-    const px = find(x), py = find(y);
-    if (px === py) return false;
-    if (rank[px] < rank[py]) parent[px] = py;
-    else if (rank[px] > rank[py]) parent[py] = px;
-    else { parent[py] = px; rank[px]++; }
-    return true;
-  }
-
-  let totalWeight = 0, edgeCount = 0;
-  for (const [u, v, w] of edges) {
-    if (union(u, v)) {
-      totalWeight += w;
-      edgeCount++;
-      if (edgeCount === n - 1) break;
+int find(int x) {
+    while (parent[x] != x) {
+        parent[x] = parent[parent[x]];   // 路径压缩
+        x = parent[x];
     }
-  }
+    return x;
+}
 
-  return edgeCount === n - 1 ? totalWeight : -1;
+bool unite(int x, int y) {
+    int px = find(x), py = find(y);
+    if (px == py) return false;          // 已连通，会成环
+    if (rnk[px] < rnk[py]) swap(px, py);
+    parent[py] = px;
+    if (rnk[px] == rnk[py]) rnk[px]++;   // 按秩合并
+    return true;
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m;
+    cin >> n >> m;
+
+    vector<Edge> edges(m);
+    for (int i = 0; i < m; i++) {
+        cin >> edges[i].u >> edges[i].v >> edges[i].w;
+    }
+    sort(edges.begin(), edges.end(),
+         [](const Edge& a, const Edge& b) { return a.w < b.w; });
+
+    parent.resize(n + 1);
+    rnk.assign(n + 1, 0);
+    for (int i = 1; i <= n; i++) parent[i] = i;
+
+    long long total = 0;
+    int cnt = 0;
+    for (const auto& e : edges) {
+        if (unite(e.u, e.v)) {            // 不形成环则选入
+            total += e.w;
+            if (++cnt == n - 1) break;    // 已选满 n-1 条边
+        }
+    }
+
+    cout << (cnt == n - 1 ? total : -1) << endl;  // -1 表示图不连通
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [3, 5, 22, 23, 24, 25, 27],
+          keyLines: [38,43,47,48,49,50],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `import sys
+
+def main():
+    input = sys.stdin.readline
+    n, m = map(int, input().split())
+
+    edges = []
+    for _ in range(m):
+        u, v, w = map(int, input().split())
+        edges.append((w, u, v))
+    edges.sort()                          # 按边权升序
+
+    parent = list(range(n + 1))
+    rank = [0] * (n + 1)
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]  # 路径压缩
+            x = parent[x]
+        return x
+
+    def unite(x, y):
+        px, py = find(x), find(y)
+        if px == py:
+            return False                  # 已连通，会成环
+        if rank[px] < rank[py]:
+            px, py = py, px
+        parent[py] = px
+        if rank[px] == rank[py]:
+            rank[px] += 1                 # 按秩合并
+        return True
+
+    total, cnt = 0, 0
+    for w, u, v in edges:
+        if unite(u, v):                   # 不形成环则选入
+            total += w
+            cnt += 1
+            if cnt == n - 1:
+                break                     # 已选满 n-1 条边
+
+    print(total if cnt == n - 1 else -1)  # -1 表示图不连通
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [11,13,34,35,36,38],
+        },
+      ],
       steps: [
         "将所有边按权值从小到大排序",
         "初始化并查集，每个节点自成一个集合",
@@ -234,7 +380,7 @@ export const luoguProblems: Problem[] = [
 
   // ===== 图论：Floyd 传递闭包 =====
   {
-    id: 202,
+    id: 3,
     luoguNumber: "B3611",
     title: "【模板】传递闭包",
     difficulty: Difficulty.MEDIUM,
@@ -268,23 +414,65 @@ reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])`,
       methodName: "Floyd 布尔版（传递闭包）",
       methodDescription:
         "把可达性看成布尔值，用 Floyd 的三重循环做传递：reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])。若 i 能到 k 且 k 能到 j，则 i 就能到 j。注意对角线不需要预先置 1——节点在环上时会自动变为 1。",
-      code: `function transitiveClosure(n: number, graph: number[][]): number[][] {
-  const reach = graph.map(row => [...row]);
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+using namespace std;
 
-  for (let k = 0; k < n; k++) {
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (reach[i][k] && reach[k][j]) {
-          reach[i][j] = 1;
-        }
-      }
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<vector<int>> reach(n, vector<int>(n));
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            cin >> reach[i][j];        // 0/1 邻接矩阵
+
+    // Floyd 布尔版：三重循环，k 在最外层
+    for (int k = 0; k < n; k++)
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                if (reach[i][k] && reach[k][j])
+                    reach[i][j] = 1;   // i 可经 k 到达 j
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++)
+            cout << reach[i][j] << (j == n - 1 ? "\\n" : " ");
     }
-  }
-
-  return reach;
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [4, 5, 6, 7],
+          keyLines : [15,18,19,20,21,22],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `def main():
+    input = sys.stdin.readline
+    n = int(input())
+
+    reach = [list(map(int, input().split())) for _ in range(n)]  # 0/1 邻接矩阵
+
+    # Floyd 布尔版：三重循环，k 在最外层
+    for k in range(n):
+        for i in range(n):
+            for j in range(n):
+                if reach[i][k] and reach[k][j]:
+                    reach[i][j] = 1           # i 可经 k 到达 j
+
+    for row in reach:
+        print(' '.join(map(str, row)))
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [7,10,11,12],
+        },
+      ],
       steps: [
         "将原图的邻接矩阵复制为reach",
         "枚举中间节点k（最外层循环）",
@@ -325,7 +513,7 @@ reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])`,
 
   // ===== 动态规划：01背包 =====
   {
-    id: 203,
+    id: 4,
     luoguNumber: "P1048",
     title: "采药（01背包）",
     difficulty: Difficulty.EASY,
@@ -359,19 +547,64 @@ reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])`,
       methodName: "01背包DP（一维优化）",
       methodDescription:
         "dp[j]表示容量为j时能获得的最大价值。对于每个物品，逆序遍历容量，dp[j] = max(dp[j], dp[j-w[i]] + v[i])。逆序确保每个物品最多使用一次。",
-      code: `function knapsack01(T: number, herbs: [number, number][]): number {
-  const dp = new Array(T + 1).fill(0);
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
 
-  for (const [time, value] of herbs) {
-    for (let j = T; j >= time; j--) {
-      dp[j] = Math.max(dp[j], dp[j - time] + value);
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int T, M;                        // 总时间、草药数
+    cin >> T >> M;
+
+    vector<int> dp(T + 1, 0);        // dp[j]：时间 j 内能获得的最大价值
+
+    for (int i = 0; i < M; i++) {
+        int time, value;
+        cin >> time >> value;
+
+        // 逆序遍历容量，保证每株草药最多选一次（01背包关键）
+        for (int j = T; j >= time; j--) {
+            dp[j] = max(dp[j], dp[j - time] + value);
+        }
     }
-  }
 
-  return dp[T];
+    cout << dp[T] << endl;
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [4, 5],
+          keyLines : [13,15,20,21],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `import sys
+
+def main():
+    input = sys.stdin.readline
+    T, M = map(int, input().split())   # 总时间、草药数
+
+    dp = [0] * (T + 1)                 # dp[j]：时间 j 内能获得的最大价值
+
+    for _ in range(M):
+        time, value = map(int, input().split())
+
+        # 逆序遍历容量，保证每株草药最多选一次（01背包关键）
+        for j in range(T, time - 1, -1):
+            dp[j] = max(dp[j], dp[j - time] + value)
+
+    print(dp[T])
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [7,9,13,14],
+        },
+      ],
       steps: [
         "初始化dp数组为0",
         "遍历每个物品（草药）",
@@ -392,7 +625,7 @@ reach[i][j] = reach[i][j] || (reach[i][k] && reach[k][j])`,
 
   // ===== 图论：Prim 最小生成树 =====
   {
-    id: 204,
+    id: 5,
     luoguNumber: "P3366",
     title: "【模板】最小生成树（Prim算法）",
     difficulty: Difficulty.MEDIUM,
@@ -427,42 +660,101 @@ Prim 算法是一种基于节点的贪心策略：从任意起点出发，每次
       methodName: "Prim（暴力版）",
       methodDescription:
         "Prim算法从起点出发逐步扩展MST。每轮扫描所有候选边（已选节点→未选节点的边），选最小权边。暴力实现O(V²+E)，适合讲解算法思想。",
-      code: `function prim(n: number, edges: [number, number, number][]): number {
-  const adj: Map<number, [number, number][]> = new Map();
-  for (let i = 1; i <= n; i++) adj.set(i, []);
-  for (const [u, v, w] of edges) {
-    adj.get(u)!.push([v, w]);
-    adj.get(v)!.push([u, w]);
-  }
+      // 多语言代码版本（题解区顶部可切换 C++ / Python）
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+#include <climits>
+using namespace std;
 
-  const inMST = new Array(n + 1).fill(false);
-  inMST[1] = true;
-  let totalWeight = 0, edgeCount = 0;
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
 
-  for (let iter = 0; iter < n - 1; iter++) {
-    let bestWeight = Infinity, bestFrom = -1, bestTo = -1;
+    int n, m;
+    cin >> n >> m;
 
-    for (let u = 1; u <= n; u++) {
-      if (!inMST[u]) continue;
-      for (const [v, w] of adj.get(u)!) {
-        if (!inMST[v] && w < bestWeight) {
-          bestWeight = w;
-          bestFrom = u;
-          bestTo = v;
-        }
-      }
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});
+        adj[v].push_back({u, w});         // 无向边
     }
 
-    if (bestTo === -1) return -1; // 图不连通
-    inMST[bestTo] = true;
-    totalWeight += bestWeight;
-    edgeCount++;
-  }
+    vector<bool> inMST(n + 1, false);
+    inMST[1] = true;                      // 从节点 1 出发
+    long long total = 0;
+    int cnt = 0;
 
-  return edgeCount === n - 1 ? totalWeight : -1;
+    for (int iter = 0; iter < n - 1; iter++) {
+        // 扫描所有候选边：已选节点 → 未选节点
+        int bestW = INT_MAX, bestV = -1;
+        for (int u = 1; u <= n; u++) {
+            if (!inMST[u]) continue;
+            for (auto [v, w] : adj[u]) {
+                if (!inMST[v] && w < bestW) {
+                    bestW = w;
+                    bestV = v;
+                }
+            }
+        }
+        if (bestV == -1) break;           // 图不连通
+        inMST[bestV] = true;
+        total += bestW;
+        cnt++;
+    }
+
+    cout << (cnt == n - 1 ? total : -1) << endl;
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [11, 13, 14, 27, 28, 29],
+          keyLines: [22, 26, 28, 32, 39, 40],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `import sys
+
+def main():
+    input = sys.stdin.readline
+    n, m = map(int, input().split())
+
+    adj = [[] for _ in range(n + 1)]
+    for _ in range(m):
+        u, v, w = map(int, input().split())
+        adj[u].append((v, w))
+        adj[v].append((u, w))           # 无向边
+
+    in_mst = [False] * (n + 1)
+    in_mst[1] = True                    # 从节点 1 出发
+    total, cnt = 0, 0
+
+    for _ in range(n - 1):
+        # 扫描所有候选边：已选节点 → 未选节点
+        best_w, best_v = float('inf'), -1
+        for u in range(1, n + 1):
+            if not in_mst[u]:
+                continue
+            for v, w in adj[u]:
+                if not in_mst[v] and w < best_w:
+                    best_w = w
+                    best_v = v
+        if best_v == -1:
+            break                       # 图不连通
+        in_mst[best_v] = True
+        total += best_w
+        cnt += 1
+
+    print(total if cnt == n - 1 else -1)
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [14, 17, 19, 24, 29, 30],
+        },
+      ],
       steps: [
         "初始化：将起点（节点1）加入已选集合",
         "扫描所有已选节点的出边，找出连接到未选节点的边",
@@ -505,7 +797,7 @@ Prim 算法是一种基于节点的贪心策略：从任意起点出发，每次
 
   // ===== 图论：图的遍历（BFS/DFS）=====
   {
-    id: 205,
+    id: 6,
     luoguNumber: "P5318",
     title: "图的遍历（BFS与DFS）",
     difficulty: Difficulty.EASY,
@@ -526,59 +818,149 @@ Prim 算法是一种基于节点的贪心策略：从任意起点出发，每次
         explanation: "同一张图，BFS按层序访问，DFS按深度优先访问，产生不同的遍历顺序。",
       },
     ],
+
     constraints: [
       "1 ≤ n ≤ 10^5",
       "1 ≤ m ≤ 10^6",
       "图不一定连通（从 1 出发只遍历可达部分）",
     ],
+
     hints: [
       "BFS：用队列维护待访问节点",
       "DFS：用递归或显式栈维护待访问节点",
       "用 visited 数组避免重复访问",
       "邻接表存储图，邻居按编号排序以保证确定性输出",
     ],
+
     solution: {
       methodName: "BFS + DFS 对比",
       methodDescription:
         "BFS用队列实现：起点入队→出队访问→邻居入队→重复。DFS用递归实现：访问节点→递归访问未访问邻居→回溯。两种策略时间复杂度均为 O(V+E)。",
-      code: `// BFS
-function bfs(n: number, adj: Map<number, number[]>, start: number): number[] {
-  const visited = new Array(n + 1).fill(false);
-  const queue = [start];
-  const order: number[] = [];
-  visited[start] = true;
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+using namespace std;
 
-  while (queue.length > 0) {
-    const u = queue.shift()!;
-    order.push(u);
-    for (const v of adj.get(u) || []) {
-      if (!visited[v]) {
-        visited[v] = true;
-        queue.push(v);
-      }
+int n, m;
+vector<vector<int>> adj;
+vector<bool> visited;
+
+// DFS（迭代栈，逆序压栈保证与递归顺序一致）
+void dfs(int start) {
+    vector<int> st = {start};
+    while (!st.empty()) {
+        int u = st.back();
+        st.pop_back();
+        if (visited[u]) continue;
+        visited[u] = true;
+        cout << u << " ";
+        for (int i = (int)adj[u].size() - 1; i >= 0; i--) {
+            int v = adj[u][i];
+            if (!visited[v]) st.push_back(v);
+        }
     }
-  }
-  return order;
+    cout << "\\n";
 }
 
-// DFS
-function dfs(n: number, adj: Map<number, number[]>, start: number): number[] {
-  const visited = new Array(n + 1).fill(false);
-  const order: number[] = [];
-
-  function dfsInner(u: number) {
-    visited[u] = true;
-    order.push(u);
-    for (const v of adj.get(u) || []) {
-      if (!visited[v]) dfsInner(v);
+// BFS（队列）
+void bfs(int start) {
+    fill(visited.begin(), visited.end(), false);
+    queue<int> q;
+    q.push(start);
+    visited[start] = true;
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        cout << u << " ";
+        for (int v : adj[u]) {
+            if (!visited[v]) {
+                visited[v] = true;
+                q.push(v);
+            }
+        }
     }
-  }
+    cout << "\\n";
+}
 
-  dfsInner(start);
-  return order;
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    cin >> n >> m;
+    adj.assign(n + 1, {});
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);        // 有向边 X→Y
+    }
+    for (int i = 1; i <= n; i++) {
+        sort(adj[i].begin(), adj[i].end());  // 先看编号较小
+    }
+
+    visited.assign(n + 1, false);
+    dfs(1);
+    bfs(1);
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [8, 9, 23, 26, 27, 30],
+          keyLines: [17, 20, 34, 38, 40, 57, 60],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `import sys
+from collections import deque
+
+def main():
+    input = sys.stdin.readline
+    n, m = map(int, input().split())
+
+    adj = [[] for _ in range(n + 1)]
+    for _ in range(m):
+        u, v = map(int, input().split())
+        adj[u].append(v)             # 有向边 X→Y
+
+    for nb in adj:
+        nb.sort()                    # 先看编号较小
+
+    # DFS（迭代栈，逆序压栈保证与递归顺序一致）
+    visited = [False] * (n + 1)
+    stack = [1]
+    order = []
+    while stack:
+        u = stack.pop()
+        if visited[u]:
+            continue
+        visited[u] = True
+        order.append(u)
+        for v in reversed(adj[u]):
+            if not visited[v]:
+                stack.append(v)
+    print(' '.join(map(str, order)))
+
+    # BFS（队列）
+    visited = [False] * (n + 1)
+    q = deque([1])
+    visited[1] = True
+    order = []
+    while q:
+        u = q.popleft()
+        order.append(u)
+        for v in adj[u]:
+            if not visited[v]:
+                visited[v] = True
+                q.append(v)
+    print(' '.join(map(str, order)))
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [11, 14, 21, 26, 36, 39, 41],
+        },
+      ],
       steps: [
         "初始化 visited 数组",
         "BFS：起点入队，循环出队→访问→邻居入队",
@@ -617,7 +999,7 @@ function dfs(n: number, adj: Map<number, number[]>, start: number): number[] {
 
   // ===== 图论：拓扑排序 + DP（杂务） =====
   {
-    id: 206,
+    id: 7,
     luoguNumber: "P1113",
     title: "【USACO02FEB】杂务（拓扑排序 + DP）",
     difficulty: Difficulty.MEDIUM,
@@ -635,38 +1017,97 @@ f[i] = len[i] + max(f[前置])，答案 = max(f[i])，即 DAG 上的关键路径
         explanation: "官方样例。f[1]=5，f[2]=7，f[3]=10，f[4]=11，f[5]=12，f[6]=19，f[7]=4+max(10,12,19)=23。杂务 7 依赖的链条 1→4→6→7（或 1→2→4→6→7）是决定总时长的关键路径。",
       },
     ],
+
     constraints: [
       "3 ≤ n ≤ 10,000",
       "1 ≤ len ≤ 100",
       "每个杂务的前置杂务不超过 100 个",
     ],
+
     hints: [
       "杂务 k 的前置只在 1..k-1 中：按编号顺序即拓扑序",
       "f[i] = len[i] + max(f[前置])",
       "答案 = max(f[i])（关键路径长度）",
       "也可以建图后跑 Kahn 拓扑排序，入度减到 0 时更新 f",
     ],
+
     solution: {
       methodName: "拓扑序 DP（关键路径）",
       methodDescription:
         "因为杂务 k 的前置只在 1..k-1 中，按编号顺序计算就满足拓扑序：处理杂务 k 时其所有前置的 f 都已算出。f[k] = len[k] + max(f[前置])，所有 f 的最大值就是答案。",
-      code: `function chores(n: number, tasks: { id: number; len: number; prereqs: number[] }[]): number {
-  const finish = new Array(n + 1).fill(0);
-  let answer = 0;
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
 
-  for (const task of tasks) { // 按编号顺序，天然拓扑序
-    let maxPre = 0;
-    for (const pre of task.prereqs) {
-      maxPre = Math.max(maxPre, finish[pre]);
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<int> finish(n + 1, 0);   // f[i]：杂务 i 的最早完成时间
+    int answer = 0;
+
+    for (int i = 1; i <= n; i++) {
+        int id, len;
+        cin >> id >> len;
+
+        // 前置编号 <= id-1，其 f 值必已算好（天然拓扑序）
+        int maxPre = 0;
+        int pre;
+        while (cin >> pre && pre != 0) {
+            maxPre = max(maxPre, finish[pre]);
+        }
+
+        finish[id] = len + maxPre;
+        answer = max(answer, finish[id]);
     }
-    finish[task.id] = task.len + maxPre;
-    answer = Math.max(answer, finish[task.id]);
-  }
 
-  return answer;
+    cout << answer << endl;
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [5, 6, 8, 10, 11],
+          keyLines: [13, 16, 23, 24, 27, 28],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `import sys
+
+def main():
+    input = sys.stdin.readline
+    n = int(input())
+
+    finish = [0] * (n + 1)          # f[i]：杂务 i 的最早完成时间
+    answer = 0
+
+    for _ in range(n):
+        parts = list(map(int, input().split()))
+        id_ = parts[0]
+        len_ = parts[1]
+
+        # 前置编号 <= id-1，其 f 值必已算好（天然拓扑序）
+        max_pre = 0
+        for pre in parts[2:]:
+            if pre == 0:
+                break
+            max_pre = max(max_pre, finish[pre])
+
+        finish[id_] = len_ + max_pre
+        answer = max(answer, finish[id_])
+
+    print(answer)
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [7, 10, 17, 20, 22, 23],
+        },
+      ],
       steps: [
         "读入 n 个杂务（序号、耗时、前置列表）",
         "按编号顺序处理（前置只在 1..k-1 中，天然拓扑序）",
@@ -707,7 +1148,7 @@ f[i] = len[i] + max(f[前置])，答案 = max(f[i])，即 DAG 上的关键路径
 
   // ===== 动态规划：最长上升子序列 (LIS) =====
   {
-    id: 207,
+    id: 8,
     luoguNumber: "B3637",
     title: "最长上升子序列（LIS）",
     difficulty: Difficulty.EASY,
@@ -725,38 +1166,85 @@ f[i] = len[i] + max(f[前置])，答案 = max(f[i])，即 DAG 上的关键路径
         explanation: "分别取出 1、2、3、4 即可，它们构成最长的上升子序列。",
       },
     ],
+
     constraints: [
       "1 ≤ n ≤ 5000",
       "1 ≤ a[i] ≤ 10^6",
     ],
+
     hints: [
       "dp[i] 表示以 nums[i] 结尾的最长递增子序列长度",
       "对每个 i，检查所有 j < i：若 nums[j] < nums[i]，则 dp[i] = max(dp[i], dp[j] + 1)",
       "时间复杂度 O(n²)，可用贪心+二分优化到 O(n log n)",
       "维护 prev 数组可以回溯出具体序列",
     ],
+
     solution: {
       methodName: "动态规划 O(n²)",
       methodDescription:
         "dp[i] = 以 nums[i] 结尾的最长递增子序列长度。对每个 i，枚举 j < i，如果 nums[j] < nums[i]，则可拼接：dp[i] = max(dp[i], dp[j] + 1)。",
-      code: `function lengthOfLIS(nums: number[]): number {
-  const n = nums.length;
-  const dp = new Array(n).fill(1);
-  let maxLen = 1;
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
 
-  for (let i = 1; i < n; i++) {
-    for (let j = 0; j < i; j++) {
-      if (nums[j] < nums[i]) {
-        dp[i] = Math.max(dp[i], dp[j] + 1);
-      }
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<int> nums(n);
+    for (int i = 0; i < n; i++) cin >> nums[i];
+
+    vector<int> dp(n, 1);        // dp[i]：以 nums[i] 结尾的 LIS 长度
+    int maxLen = 1;
+
+    for (int i = 1; i < n; i++) {
+        for (int j = 0; j < i; j++) {
+            if (nums[j] < nums[i]) {
+                dp[i] = max(dp[i], dp[j] + 1);
+            }
+        }
+        maxLen = max(maxLen, dp[i]);
     }
-    maxLen = Math.max(maxLen, dp[i]);
-  }
 
-  return maxLen;
+    cout << maxLen << endl;
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [3, 8, 9, 12],
+          keyLines: [16, 19, 20, 21, 22],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `import sys
+
+def main():
+    input = sys.stdin.readline
+    n = int(input())
+    nums = list(map(int, input().split()))
+
+    dp = [1] * n                    # dp[i]：以 nums[i] 结尾的 LIS 长度
+    max_len = 1
+
+    for i in range(1, n):
+        for j in range(i):
+            if nums[j] < nums[i]:
+                dp[i] = max(dp[i], dp[j] + 1)
+        max_len = max(max_len, dp[i])
+
+    print(max_len)
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [8, 11, 12, 13, 14],
+        },
+      ],
       steps: [
         "初始化 dp[i] = 1",
         "遍历每个 i（1 到 n-1）",
@@ -796,7 +1284,7 @@ f[i] = len[i] + max(f[前置])，答案 = max(f[i])，即 DAG 上的关键路径
 
   // ===== 动态规划：最长公共子序列 (LCS) =====
   {
-    id: 208,
+    id: 9,
     luoguNumber: "P1439",
     title: "【模板】最长公共子序列",
     difficulty: Difficulty.MEDIUM,
@@ -812,41 +1300,97 @@ f[i] = len[i] + max(f[前置])，答案 = max(f[i])，即 DAG 上的关键路径
         explanation: "官方样例。P1=[3,2,1,4,5]，P2=[1,2,3,4,5]，最长公共子序列为 [3,4,5]（或 [1,4,5]、[2,4,5]），长度为 3。",
       },
     ],
+
     constraints: [
       "1 ≤ n ≤ 10^5",
       "每行都是 1..n 的一个排列",
     ],
+
     hints: [
       "一般解法：二维 DP，dp[i][j] = 相等?左上+1 : max(上,左)，O(n²)",
       "排列性质：P2 的元素换成在 P1 中的位置后，LCS 变成 LIS",
       "LIS 可用贪心+二分做到 O(n log n)，能通过 n=10^5 的数据",
       "可视化演示用 O(n²) DP 展示状态转移，输入 n 限制为 60 以内",
     ],
+
     solution: {
       methodName: "排列转 LIS（O(n log n)）",
       methodDescription:
         "因为两个序列都是 1..n 的排列：记录 P1 中每个数的位置 pos[x]，把 P2 的每个数换成 pos[x]，则两排列的公共子序列恰好对应一个在 P1 中位置递增的序列——LCS 转化为 LIS。用 tails 数组 + 二分求严格 LIS，时间复杂度 O(n log n)。",
-      code: `function lcsPermutation(n: number, p1: number[], p2: number[]): number {
-  const pos = new Array(n + 1).fill(0);
-  for (let i = 0; i < n; i++) pos[p1[i]] = i + 1; // p1 中每个数的位置
+      codeVersions: [
+        {
+          language: "cpp",
+          label: "C++",
+          code: `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
 
-  const tails: number[] = []; // 贪心维护的 LIS 尾巴数组
-  for (const x of p2) {
-    const idx = pos[x]; // 转成在 p1 中的位置
-    let l = 0, r = tails.length;
-    while (l < r) { // 二分第一个 >= idx 的位置
-      const mid = (l + r) >> 1;
-      if (tails[mid] < idx) l = mid + 1;
-      else r = mid;
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    vector<int> pos(n + 1);
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        pos[x] = i + 1;          // p1 中每个数的位置
     }
-    if (l === tails.length) tails.push(idx);
-    else tails[l] = idx;
-  }
 
-  return tails.length;
+    vector<int> tails;           // tails[i] = 长度为 i+1 的 LIS 最小结尾值
+    for (int i = 0; i < n; i++) {
+        int x;
+        cin >> x;
+        int idx = pos[x];        // 转成在 p1 中的位置
+        auto it = lower_bound(tails.begin(), tails.end(), idx);
+        if (it == tails.end()) {
+            tails.push_back(idx);
+        } else {
+            *it = idx;
+        }
+    }
+
+    cout << tails.size() << endl;
+    return 0;
 }`,
-      language: "typescript",
-      keyLines: [3, 5, 7, 9, 14],
+          keyLines: [13, 17, 20, 24, 25, 27],
+        },
+        {
+          language: "python",
+          label: "Python",
+          code: `import sys
+from bisect import bisect_left
+
+def main():
+    input = sys.stdin.readline
+    n = int(input())
+
+    p1 = list(map(int, input().split()))
+    p2 = list(map(int, input().split()))
+
+    pos = [0] * (n + 1)
+    for i, x in enumerate(p1, start=1):
+        pos[x] = i                  # p1 中每个数的位置
+
+    tails = []                      # tails[i] = 长度为 i+1 的 LIS 最小结尾值
+    for x in p2:
+        idx = pos[x]                # 转成在 p1 中的位置
+        it = bisect_left(tails, idx)
+        if it == len(tails):
+            tails.append(idx)
+        else:
+            tails[it] = idx
+
+    print(len(tails))
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [11, 13, 15, 17, 18, 20],
+        },
+      ],
       steps: [
         "记录 P1 中每个数的位置 pos[x]",
         "把 P2 的每个数换成它在 P1 中的位置 idx",

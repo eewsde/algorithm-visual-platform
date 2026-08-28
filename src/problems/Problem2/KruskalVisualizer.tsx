@@ -60,7 +60,6 @@ function KruskalVisualizer() {
             value: { input: "5 7\n1 2 3\n1 5 1\n2 3 5\n2 5 4\n3 4 2\n3 5 6\n4 5 7" },
           },
         ],
-        keyLines: [3, 5, 22, 23, 24, 25, 27],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -237,7 +236,7 @@ function KruskalVisualizer() {
                 )}
 
                 <PerformancePanel
-                  comparisons={getProblemById(201)?.solution?.comparisons || []}
+                  comparisons={getProblemById(2)?.solution?.comparisons || []}
                   benchmark={createMSTBenchmark()}
                 />
               </div>

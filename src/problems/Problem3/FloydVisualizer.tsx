@@ -49,7 +49,7 @@ function FloydVisualizer() {
             value: { input: "4\n0 1 0 0\n0 0 1 0\n0 0 0 1\n0 1 0 0" },
           },
         ],
-        keyLines: [4, 5, 6, 7],
+        
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (

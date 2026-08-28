@@ -45,7 +45,7 @@ function LISVisualizer() {
             value: { input: "7 7 7 7 7" },
           },
         ],
-        keyLines: [3,8,9,12],
+        
         customStepVariables: (variables) => {
           if (!variables || Object.keys(variables).length === 0) return null;
           return (

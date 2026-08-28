@@ -41,7 +41,7 @@ function LCSVisualizer() {
             value: { input: "4\n1 2 3 4\n4 3 2 1" },
           },
         ],
-        keyLines: [3, 5, 7, 9, 14],
+        
         customStepVariables: (variables) => {
           if (!variables || Object.keys(variables).length === 0) return null;
           return (

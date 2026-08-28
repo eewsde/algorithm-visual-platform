@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { SolutionConfig } from "@/types";
 import CodeDisplay from "./CodeDisplay";
 
@@ -6,6 +7,11 @@ interface SolutionSectionProps {
 }
 
 function SolutionSection({ solution }: SolutionSectionProps) {
+  // 多语言代码版本的当前选中下标（0 为默认语言）
+  const [codeLangIndex, setCodeLangIndex] = useState(0);
+  const codeVersions = solution.codeVersions || [];
+  const activeVersion = codeVersions[codeLangIndex];
+
   return (
     <>
       {/* 为什么选择这个方法 */}
@@ -133,13 +139,45 @@ function SolutionSection({ solution }: SolutionSectionProps) {
       </div>
 
       {/* 代码实现 */}
-      {solution.code && (
-        <CodeDisplay
-          code={solution.code}
-          language={solution.language || "typescript"}
-          title={`${solution.methodName}（${solution.language?.toUpperCase() || 'TypeScript'}）`}
-          highlightedLines={solution.keyLines || []}
-        />
+      {codeVersions.length > 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          {/* 语言切换标签页 */}
+          <div className="flex items-end gap-1 px-2 pt-2 bg-gray-50 border-b border-gray-200">
+            {codeVersions.map((v, i) => (
+              <button
+                key={v.language}
+                onClick={() => setCodeLangIndex(i)}
+                className={`px-4 py-2 rounded-t-lg text-sm font-medium transition border-b-2 -mb-px ${
+                  i === codeLangIndex
+                    ? "bg-white text-primary-700 border-primary-500"
+                    : "text-gray-600 border-transparent hover:text-gray-900"
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+            <span className="ml-auto pr-3 pb-2 text-xs text-gray-400">
+              {solution.methodName}
+            </span>
+          </div>
+          {activeVersion && (
+            <CodeDisplay
+              code={activeVersion.code}
+              language={activeVersion.language}
+              highlightedLines={activeVersion.keyLines || []}
+              useLiveHighlight={false}
+            />
+          )}
+        </div>
+      ) : (
+        solution.code && (
+          <CodeDisplay
+            code={solution.code}
+            language={solution.language || "typescript"}
+            title={`${solution.methodName}（${solution.language?.toUpperCase() || 'TypeScript'}）`}
+            highlightedLines={solution.keyLines || []}
+          />
+        )
       )}
 
       {/* 复杂度分析 */}

@@ -44,7 +44,7 @@ function TopoSortVisualizer() {
             value: { input: "3\n1 2 0\n2 3 1 0\n3 4 2 0" },
           },
         ],
-        keyLines: [5, 6, 8, 10, 11],
+        
         customStepVariables: (variables) => {
           if (!variables || Object.keys(variables).length === 0) return null;
           return (

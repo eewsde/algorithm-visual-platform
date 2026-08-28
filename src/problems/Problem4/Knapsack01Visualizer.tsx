@@ -52,7 +52,7 @@ function Knapsack01Visualizer() {
             value: { input: "10 4\n2 3\n3 4\n4 5\n5 6" },
           },
         ],
-        keyLines: [4,5],
+        
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (

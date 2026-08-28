@@ -61,7 +61,6 @@ function PrimVisualizer() {
             value: { input: "5 7\n1 2 3\n1 5 1\n2 3 5\n2 5 4\n3 4 2\n3 5 6\n4 5 7" },
           },
         ],
-        keyLines: [11, 13, 14, 27, 28, 29],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -295,7 +294,7 @@ function PrimVisualizer() {
                 </div>
 
                 <PerformancePanel
-                  comparisons={getProblemById(204)?.solution?.comparisons || []}
+                  comparisons={getProblemById(5)?.solution?.comparisons || []}
                   benchmark={createMSTBenchmark()}
                 />
               </div>

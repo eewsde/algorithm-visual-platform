@@ -64,7 +64,6 @@ function DijkstraVisualizer() {
             value: { input: "6 9 1\n1 2 7\n1 3 9\n1 6 14\n2 3 10\n2 4 15\n3 4 11\n3 6 2\n4 5 6\n5 6 9" },
           },
         ],
-        keyLines: [12, 14, 17, 24, 29],
         customStepVariables: (variables) => {
           if (variables && Object.keys(variables).length > 0) {
             return (
@@ -267,7 +266,7 @@ function DijkstraVisualizer() {
 
                 {/* 性能对比 */}
                 <PerformancePanel
-                  comparisons={getProblemById(200)?.solution?.comparisons || []}
+                  comparisons={getProblemById(1)?.solution?.comparisons || []}
                   benchmark={createDijkstraBenchmark()}
                 />
               </div>
