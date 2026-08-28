@@ -83,7 +83,7 @@ function SolutionSection({ solution }: SolutionSectionProps) {
                         )}
                         {comparison.isRecommended && (
                           <p className="text-xs text-green-700 mt-2 font-medium">
-                            ✓ 推荐！在面试和实际应用中最常用
+                            ✓ 本项目采用的方法
                           </p>
                         )}
                       </div>
