@@ -1,10 +1,9 @@
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode } from "react";
 import { useVisualization } from "@/hooks/useVisualization";
 import { VisualizationLayout } from "./VisualizationLayout";
 import { StepVariables, ProblemInput } from "@/types/visualization";
 import { InputType } from "@/hooks/useInputHandler";
 import { InputFieldConfig } from "./TestCaseInput";
-import { useCodeStore } from "@/store/useCodeStore";
 
 /**
  * 可视化配置接口
@@ -21,9 +20,6 @@ export interface VisualizerConfig<TInput extends ProblemInput = ProblemInput, TD
   
   // 自定义变量显示
   customStepVariables?: (variables: StepVariables) => ReactNode;
-
-  // 代码高亮行号（用于自动轮转高亮）
-  keyLines?: number[];
 
   // 步骤重新生成依赖（如 BFS/DFS 模式切换），变化时重跑算法但保留输入
   regenKey?: unknown;
@@ -69,39 +65,10 @@ export function ConfigurableVisualizer<TInput extends ProblemInput = ProblemInpu
     { regenKey: config.regenKey }
   );
 
-  const setHighlightLines = useCodeStore((s) => s.setHighlightLines);
-
   // 提取当前步骤数据
   const currentData = (visualization.currentStepData?.data || {}) as TData & { highlightLines?: number[] };
   const variables = visualization.currentStepData?.variables as StepVariables | undefined;
-  const currentStep = visualization.currentStep;
-  const totalSteps = visualization.steps.length;
 
-  // keyLines 内容签名（字符串，跨渲染稳定，避免因数组引用变化导致 effect 反复执行）
-  const keyLinesSignature = config.keyLines?.join(",") ?? "";
-  const keyLinesRef = useRef<number[]>([]);
-  useEffect(() => {
-    keyLinesRef.current = config.keyLines ?? [];
-  }, [config.keyLines]);
-
-  // 同步代码高亮行到全局 store
-  useEffect(() => {
-    if (currentData.highlightLines) {
-      setHighlightLines(currentData.highlightLines);
-    } else {
-      const keyLines = keyLinesRef.current;
-      if (keyLines.length > 0 && totalSteps > 0) {
-        // 无 per-step 数据时，用轮转方式自动高亮 keyLines
-        const idx = Math.floor((currentStep / Math.max(1, totalSteps)) * keyLines.length);
-        const lines = keyLines.slice(0, Math.max(1, Math.min(idx + 1, keyLines.length)));
-        setHighlightLines(lines);
-      }
-    }
-  }, [currentData.highlightLines, setHighlightLines, totalSteps, currentStep, keyLinesSignature]);
-
-  useEffect(() => {
-    return () => setHighlightLines([]);
-  }, [setHighlightLines]);
 
   // 辅助函数
   const getVariable = <T = any>(name: string, defaultValue?: T): T | undefined => {

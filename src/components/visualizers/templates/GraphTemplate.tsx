@@ -209,15 +209,15 @@ function straightEdgeGeometry(
   radius: number,
   gap: number
 ): EdgeGeometry {
-  const dx = toPos.x - fromPos.x;
-  const dy = toPos.y - fromPos.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  const ux = dx / dist;
-  const uy = dy / dist;
+  const dx = toPos.x - fromPos.x;//两点在x方向的差
+  const dy = toPos.y - fromPos.y;//两点在y方向的差
+  const dist = Math.sqrt(dx * dx + dy * dy);//两点距离
+  const ux = dx / dist;//x方向的单位向量
+  const uy = dy / dist;//y方向的单位向量
 
-  const startX = fromPos.x + ux * radius;
+  const startX = fromPos.x + ux * radius;//沿方向往外推一个半径
   const startY = fromPos.y + uy * radius;
-  const endX = toPos.x - ux * (radius + gap);
+  const endX = toPos.x - ux * (radius + gap);//沿反方向缩回半径+gap
   const endY = toPos.y - uy * (radius + gap);
 
   return {

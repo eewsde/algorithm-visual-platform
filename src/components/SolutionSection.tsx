@@ -165,7 +165,7 @@ function SolutionSection({ solution }: SolutionSectionProps) {
               code={activeVersion.code}
               language={activeVersion.language}
               highlightedLines={activeVersion.keyLines || []}
-              useLiveHighlight={false}
+              
             />
           )}
         </div>

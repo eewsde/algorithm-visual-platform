@@ -93,7 +93,7 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
         distance: i + 1 === start ? 0 : INF,
       })),
       edges: snapshotEdges(null),
-      highlightLines: [2, 3, 4, 5, 7, 8, 12],
+      
     },
     variables: {
       current: start,
@@ -131,7 +131,7 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
         })),
         edges: snapshotEdges(null),
         visited: [...visited.slice(1)],
-        highlightLines: [14, 16, 17, 18, 19, 20, 23, 24],
+        
       },
       variables: {
         current: u,
@@ -165,7 +165,7 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
             })),
             edges: snapshotEdges(edge.index),
             visited: [...visited.slice(1)],
-            highlightLines: [26, 27, 28, 29],
+            
           },
           variables: {
             current: u,
@@ -191,7 +191,7 @@ export function generateDijkstraSteps(input: DijkstraInput): VisualizationStep[]
             })),
             edges: snapshotEdges(edge.index),
             visited: [...visited.slice(1)],
-            highlightLines: [26, 27, 28],
+            
           },
           variables: {
             current: u,
