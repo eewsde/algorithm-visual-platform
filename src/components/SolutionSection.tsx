@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { SolutionConfig } from "@/types";
 import CodeDisplay from "./CodeDisplay";
+import { useAlgoModeStore } from "@/store/useAlgoModeStore";
 
 interface SolutionSectionProps {
   solution: SolutionConfig;
@@ -9,7 +10,16 @@ interface SolutionSectionProps {
 function SolutionSection({ solution }: SolutionSectionProps) {
   // 多语言代码版本的当前选中下标（0 为默认语言）
   const [codeLangIndex, setCodeLangIndex] = useState(0);
-  const codeVersions = solution.codeVersions || [];
+  // 全局算法模式（Dijkstra 暴力/堆优化），用于过滤 codeVersions 的 variant
+  const dijkstraMode = useAlgoModeStore((s) => s.dijkstraMode);
+  // 先按 variant 过滤：无 variant 的版本（普通题）全部保留；
+  // 有 variant 的只保留当前模式对应的版本
+  const allVersions = solution.codeVersions || [];
+  const variantFiltered = allVersions.filter(
+    (v) => v.variant === undefined || v.variant === dijkstraMode
+  );
+  // 防御：过滤后若为空（理论上不会），回退到全部版本
+  const codeVersions = variantFiltered.length > 0 ? variantFiltered : allVersions;
   const activeVersion = codeVersions[codeLangIndex];
 
   return (
@@ -83,7 +93,7 @@ function SolutionSection({ solution }: SolutionSectionProps) {
                         )}
                         {comparison.isRecommended && (
                           <p className="text-xs text-green-700 mt-2 font-medium">
-                            ✓ 本项目采用的方法
+                            ✓ 推荐方法
                           </p>
                         )}
                       </div>

@@ -37,9 +37,9 @@ export const luoguProblems: Problem[] = [
     ],
 
     solution: {
-      methodName: "Dijkstra（暴力版）",
+      methodName: "Dijkstra（暴力版 + 堆优化版）",
       methodDescription:
-        "Dijkstra算法使用贪心策略，每次线性扫描所有节点找出未访问中距离最小的节点，对其所有出边进行松弛操作。暴力实现O(V²+E)，竞赛中通常使用优先队列优化至O((V+E)logV)。可视化采用暴力版以清晰展示每一步的选择过程。",
+        "Dijkstra算法使用贪心策略：每次取出未访问中距离最小的节点，对其所有出边进行松弛操作。暴力版每轮线性扫描找最小值，O(V²+E)，步骤直观、适合教学演示；堆优化版用优先队列维护候选节点，O((V+E)logV)，是竞赛标准写法、能通过 P4779 的数据范围。本页支持两种版本一键切换。",
       // 多语言代码版本（题解区顶部可切换 C++ / Python）
       codeVersions: [
         {
@@ -96,6 +96,7 @@ int main() {
     return 0;
 }`,
           keyLines: [23, 25, 28, 34, 35, 39, 40],
+          variant: "brute",
         },
         {
           language: "python",
@@ -137,6 +138,98 @@ def main():
 if __name__ == '__main__':
     main()`,
           keyLines: [15, 17, 20, 24, 26, 30, 31],
+          variant: "brute",
+        },
+        {
+          language: "cpp",
+          label: "C++",
+          variant: "heap",
+          code: `#include <iostream>
+#include <vector>
+#include <queue>
+#include <climits>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n, m, s;                     // 点数、边数、起点
+    cin >> n >> m >> s;
+
+    vector<vector<pair<int, int>>> adj(n + 1);
+    for (int i = 0; i < m; i++) {
+        int u, v, w;
+        cin >> u >> v >> w;
+        adj[u].push_back({v, w});    // 有向边
+    }
+
+    const int INF = INT_MAX;
+    vector<int> dist(n + 1, INF);    // 最短距离
+    dist[s] = 0;
+
+    // 小根堆：{距离, 节点}，堆顶始终是当前最小距离
+    priority_queue<pair<int, int>, vector<pair<int, int>>,
+                   greater<pair<int, int>>> pq;
+    pq.push({0, s});
+
+    while (!pq.empty()) {
+        auto [d, u] = pq.top();
+        pq.pop();
+        if (d > dist[u]) continue;   // 过期记录，跳过（懒删除）
+
+        for (auto [v, w] : adj[u]) {
+            if (dist[u] + w < dist[v]) {
+                dist[v] = dist[u] + w;
+                pq.push({dist[v], v}); // 松弛成功才入堆
+            }
+        }
+    }
+
+    for (int i = 1; i <= n; i++) {
+        cout << (dist[i] == INF ? -1 : dist[i])
+             << (i == n ? "\\n" : " ");
+    }
+    return 0;
+}`,
+          keyLines: [26, 28, 31, 33, 37, 38],
+        },
+        {
+          language: "python",
+          label: "Python",
+          variant: "heap",
+          code: `import sys
+import heapq
+
+def main():
+    input = sys.stdin.readline
+    n, m, s = map(int, input().split())
+
+    adj = [[] for _ in range(n + 1)]
+    for _ in range(m):
+        u, v, w = map(int, input().split())
+        adj[u].append((v, w))        # 有向边
+
+    INF = float('inf')
+    dist = [INF] * (n + 1)           # 最短距离
+    dist[s] = 0
+
+    # 小根堆：元素为 (距离, 节点)，堆顶始终是当前最小距离
+    pq = [(0, s)]
+    while pq:
+        d, u = heapq.heappop(pq)
+        if d > dist[u]:              # 过期记录，跳过（懒删除）
+            continue
+        for v, w in adj[u]:
+            if dist[u] + w < dist[v]:
+                dist[v] = dist[u] + w
+                heapq.heappush(pq, (dist[v], v))  # 松弛成功才入堆
+
+    print(' '.join(str(-1 if dist[i] == INF else dist[i]) for i in range(1, n + 1)))
+
+if __name__ == '__main__':
+    main()`,
+          keyLines: [18, 20, 21, 25, 26],
         },
       ],
 
@@ -164,18 +257,18 @@ if __name__ == '__main__':
           description: "每次暴力扫描找最小距离",
           timeComplexity: "O(V²)",
           spaceComplexity: "O(V)",
-          isRecommended: true,
-          pros: ["实现简单"],
-          cons: ["节点多时效率低"],
+          isRecommended: false,
+          pros: ["实现简单", "适合教学演示，每步直观"],
+          cons: ["节点多时超时，过不了 P4779"],
         },
         {
           name: "Dijkstra（堆优化）",
           description: "使用优先队列维护最小距离",
           timeComplexity: "O((V+E)log V)",
           spaceComplexity: "O(V+E)",
-          isRecommended: false,
-          pros: ["稀疏图高效", "竞赛标准写法"],
-          cons: ["需要数据结构支持"],
+          isRecommended: true,
+          pros: ["稀疏图高效", "竞赛标准写法", "能通过 P4779 数据范围"],
+          cons: ["需要优先队列支持"],
         },
         {
           name: "Bellman-Ford",

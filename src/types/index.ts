@@ -90,6 +90,8 @@ export interface CodeVersion {
   label: string; // 标签页显示名："C++" / "Python"
   code: string; // 代码内容
   keyLines?: number[]; // 该语言版本的关键行（静态高亮）
+  /** 算法变体（如 "brute" / "heap"）：存在时按全局算法模式过滤显示 */
+  variant?: string;
 }
 
 // 题目信息

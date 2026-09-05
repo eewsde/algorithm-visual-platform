@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { GraphTemplate, GraphNodeState, GraphEdgeState } from "@/components/visualizers/templates/GraphTemplate";
 import { ConfigurableVisualizer } from "@/components/visualizers/ConfigurableVisualizer";
 import { CoreIdeaBox } from "@/components/visualizers/CoreIdeaBox";
 import { ProblemInput } from "@/types/visualization";
-import { parseDijkstraInput, generateDijkstraSteps } from "./algorithm";
+import { parseDijkstraInput, generateDijkstraSteps, generateDijkstraHeapSteps } from "./algorithm";
 import { PerformancePanel, createDijkstraBenchmark } from "@/components/PerformancePanel";
+import { useAlgoModeStore } from "@/store/useAlgoModeStore";
 
 import { getProblemById } from "@/data";
 
@@ -25,22 +27,79 @@ interface DijkstraEdge {
   isVisited?: boolean;
 }
 
+/** 堆快照元素：[距离, 节点] */
+interface HeapEntry {
+  d: number;
+  n: number;
+}
+
 interface DijkstraData {
   nodes?: DijkstraNode[];
   edges?: DijkstraEdge[];
   visited?: boolean[];
+  /** 堆优化模式：当前堆内容快照 */
+  heap?: HeapEntry[];
+  /** 堆最近一次动作：push=入堆 / pop=弹出 / relax-skip=检查不更新 / done=完成 */
+  heapAction?: string;
+  /** 最近一次入堆的节点（高亮显示） */
+  pushedNode?: number;
+  /** 最近一次弹出的节点 */
+  poppedNode?: number;
+  /** 弹出的是过期记录 */
+  stale?: boolean;
 }
 
+type DijkstraMode = "brute" | "heap";
+
 function DijkstraVisualizer() {
+  const [mode, setMode] = useState<DijkstraMode>("brute");
+  // 全局模式：让左侧题解区的代码也跟着切换
+  const setDijkstraMode = useAlgoModeStore((s) => s.setDijkstraMode);
+
+  const switchMode = (next: DijkstraMode) => {
+    setMode(next);
+    setDijkstraMode(next);
+  };
+
   return (
+    <div className="h-full flex flex-col">
+      {/* 算法版本切换 */}
+      <div className="flex-shrink-0 flex items-center justify-center gap-2 p-3 bg-gray-50 border-b">
+        <span className="text-sm text-gray-600 mr-2">算法版本：</span>
+        <button
+          onClick={() => switchMode("brute")}
+          className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+            mode === "brute"
+              ? "bg-blue-600 text-white shadow"
+              : "bg-white text-gray-600 border hover:bg-gray-100"
+          }`}
+        >
+          暴力版 O(V²)
+        </button>
+        <button
+          onClick={() => switchMode("heap")}
+          className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+            mode === "heap"
+              ? "bg-emerald-600 text-white shadow"
+              : "bg-white text-gray-600 border hover:bg-gray-100"
+          }`}
+        >
+          堆优化 O((V+E)logV)
+        </button>
+      </div>
+
+      <div className="flex-1 min-h-0">
     <ConfigurableVisualizer<DijkstraInput, DijkstraData>
       config={{
         defaultInput: {
           input: "4 6 1\n1 2 2\n2 3 2\n2 4 1\n1 3 5\n3 4 3\n1 4 4",
         },
         algorithm: (input) => {
-          return generateDijkstraSteps(parseDijkstraInput(input.input));
+          const parsed = parseDijkstraInput(input.input);
+          return mode === "brute" ? generateDijkstraSteps(parsed) : generateDijkstraHeapSteps(parsed);
         },
+        // 模式切换时重新生成步骤但保留当前输入
+        regenKey: mode,
         inputTypes: [{ type: "string", key: "input", label: "图数据" }],
         inputFields: [
           {
@@ -103,6 +162,13 @@ function DijkstraVisualizer() {
                     <span className="font-mono text-gray-800 font-bold">{String(variables.newDist)}</span>
                   </div>
                 )}
+                {variables.heapSize !== undefined && (
+                  <div className="text-sm">
+                    <span className="font-mono text-teal-600 font-semibold">堆大小</span>
+                    <span className="text-gray-500"> = </span>
+                    <span className="font-mono text-gray-800 font-bold">{String(variables.heapSize)}</span>
+                  </div>
+                )}
               </div>
             );
           }
@@ -136,15 +202,29 @@ function DijkstraVisualizer() {
           return (
             <div className="p-4">
               <CoreIdeaBox
-                idea="每次选择未访问节点中距离最小的节点，对其所有邻居进行松弛操作。dist[v] = min(dist[v], dist[u] + w(u,v))"
-                color="blue"
-                features={[
-                  "可视化实现 O(V²+E)（便于逐步展示）",
-                  "堆优化可达 O((V+E)logV)",
-                  "空间复杂度 O(V+E)",
-                  "贪心策略 — 每次选最近的未访问节点",
-                  "不允许负权边",
-                ]}
+                idea={
+                  mode === "brute"
+                    ? "每次选择未访问节点中距离最小的节点，对其所有邻居进行松弛操作。dist[v] = min(dist[v], dist[u] + w(u,v))"
+                    : "用二叉最小堆（优先队列）维护候选节点：每次 O(log V) 弹出距离最小的节点并松弛其邻居；松弛成功的新距离入堆。堆中可能留有过期记录，弹出时跳过。"
+                }
+                color={mode === "brute" ? "blue" : "emerald"}
+                features={
+                  mode === "brute"
+                    ? [
+                        "可视化实现 O(V²+E)（便于逐步展示）",
+                        "堆优化可达 O((V+E)logV)",
+                        "空间复杂度 O(V+E)",
+                        "贪心策略 — 每次选最近的未访问节点",
+                        "不允许负权边",
+                      ]
+                    : [
+                        "优先队列优化 O((V+E)logV)",
+                        "空间复杂度 O(V+E)",
+                        "懒删除 — 过期记录弹出时跳过",
+                        "贪心策略 — 每次选最近的未访问节点",
+                        "不允许负权边",
+                      ]
+                }
               />
 
 
@@ -264,6 +344,47 @@ function DijkstraVisualizer() {
                   </div>
                 </div>
 
+                {/* 堆状态面板（仅堆优化模式） */}
+                {mode === "heap" && (
+                  <div className="mt-6">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      优先队列（最小堆）
+                      {data.stale && (
+                        <span className="ml-2 text-amber-600 font-medium">⚠ 过期记录，弹出后跳过</span>
+                      )}
+                    </h4>
+                    <div className="flex items-center gap-1 flex-wrap bg-gray-50 rounded-lg border border-gray-200 p-3 min-h-[3rem]">
+                      {(data.heap || []).length === 0 ? (
+                        <span className="text-gray-400 text-xs">堆已空</span>
+                      ) : (
+                        (data.heap || []).map((entry, i) => {
+                          const isNew = data.heapAction === "push" && data.pushedNode === entry.n && i === (data.heap || []).length - 1;
+                          const isPopCandidate = data.heapAction === "pop" && i === 0;
+                          return (
+                            <span key={i} className="inline-flex items-center gap-1">
+                              {i > 0 && <span className="text-gray-300">|</span>}
+                              <span
+                                className={`px-2 py-1 rounded font-mono text-xs border ${
+                                  isNew
+                                    ? "bg-emerald-100 border-emerald-400 text-emerald-800"
+                                    : isPopCandidate
+                                    ? "bg-amber-100 border-amber-400 text-amber-800"
+                                    : "bg-white border-gray-300 text-gray-800"
+                                }`}
+                              >
+                                ({entry.d === Infinity ? "∞" : entry.d}, {entry.n})
+                              </span>
+                            </span>
+                          );
+                        })
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-400 mt-1">
+                      堆顶（最左）始终是当前距离最小的节点；新距离入堆时上浮，弹出后下沉。
+                    </p>
+                  </div>
+                )}
+
                 {/* 性能对比 */}
                 <PerformancePanel
                   comparisons={getProblemById(1)?.solution?.comparisons || []}
@@ -275,6 +396,8 @@ function DijkstraVisualizer() {
         },
       }}
     />
+      </div>
+    </div>
   );
 }
 
